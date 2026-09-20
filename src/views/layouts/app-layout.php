@@ -38,7 +38,7 @@ $menuActivo ??= '';
 
 // El sidebar se sirve solo con los datos de sesión: así cualquier pantalla
 // futura no tiene que acordarse de pasárselos.
-$usuario ??= usuario_actual() ?? ['nombre' => '', 'email' => ''];
+$usuario ??= usuario_actual() ?? ['nombre' => '', 'email' => '', 'rol' => ''];
 
 $inicialesUsuario = iniciales((string) $usuario['nombre']);
 
@@ -47,16 +47,26 @@ $menu = [
     'productos' => [
         'texto' => 'Productos',
         'hijos' => [
-            'producto'      => ['texto' => 'Productos',        'ruta' => 'producto'],
-            'tipo-producto' => ['texto' => 'Tipo de Producto', 'ruta' => 'tipo-producto'],
+            'producto'      => ['texto' => 'Productos',        'ruta' => 'producto',      'capacidad' => 'producto'],
+            'tipo-producto' => ['texto' => 'Tipo de Producto', 'ruta' => 'tipo-producto', 'capacidad' => 'tipo-producto'],
             'stock'         => ['texto' => 'Stock',            'ruta' => 'stock'],
         ],
     ],
-    'pedido'   => ['texto' => 'Pedidos',  'ruta' => 'pedido'],
+    'pedido'   => ['texto' => 'Pedidos',  'ruta' => 'pedido', 'capacidad' => 'pedido-consulta'],
     'clientes' => ['texto' => 'Clientes', 'ruta' => 'clientes'],
     'finanzas' => ['texto' => 'Finanzas', 'ruta' => 'finanzas'],
-    'usuario'  => ['texto' => 'Usuarios', 'ruta' => 'usuario'],
+    'usuario'  => ['texto' => 'Usuarios', 'ruta' => 'usuario', 'capacidad' => 'usuario'],
 ];
+
+$rolActual = (string) ($usuario['rol'] ?? '');
+
+$puedeVerMenu = static function (?string $capacidad) use ($rolActual): bool {
+    if ($capacidad === null) {
+        return true;
+    }
+
+    return in_array($rolActual, CAPACIDADES[$capacidad] ?? [], true);
+};
 
 ?>
 <!DOCTYPE html>
@@ -91,6 +101,10 @@ $menu = [
         <nav class="app-nav" aria-label="Navegación principal">
             <?php foreach ($menu as $clave => $item): ?>
 
+                <?php if (!$puedeVerMenu($item['capacidad'] ?? null)): ?>
+                    <?php continue; ?>
+                <?php endif; ?>
+
                 <?php if (!isset($item['hijos'])): ?>
 
                     <a class="app-nav-item<?= $clave === $menuActivo ? ' is-activo' : '' ?>"
@@ -100,9 +114,18 @@ $menu = [
                 <?php else: ?>
 
                     <?php
-                    // El grupo se abre si la pantalla actual es uno de sus hijos.
+                    $hijosVisibles = array_filter(
+                        $item['hijos'],
+                        fn (array $hijo): bool => $puedeVerMenu($hijo['capacidad'] ?? null)
+                    );
+
+                    if ($hijosVisibles === []) {
+                        continue;
+                    }
+
+                    // El grupo se abre si la pantalla actual es uno de sus hijos visibles.
                     // <details> da el plegado nativo, sin una línea de JS.
-                    $grupoActivo = array_key_exists($menuActivo, $item['hijos']);
+                    $grupoActivo = array_key_exists($menuActivo, $hijosVisibles);
                     ?>
                     <details class="app-nav-grupo"<?= $grupoActivo ? ' open' : '' ?>>
                         <summary class="app-nav-item<?= $grupoActivo ? ' is-activo-grupo' : '' ?>">
@@ -110,7 +133,7 @@ $menu = [
                         </summary>
 
                         <div class="app-subnav">
-                            <?php foreach ($item['hijos'] as $claveHijo => $hijo): ?>
+                            <?php foreach ($hijosVisibles as $claveHijo => $hijo): ?>
                                 <a class="app-subnav-item<?= $claveHijo === $menuActivo ? ' is-activo' : '' ?>"
                                    href="<?= e(base_url($hijo['ruta'])) ?>"
                                    <?= $claveHijo === $menuActivo ? 'aria-current="page"' : '' ?>><?= e($hijo['texto']) ?></a>

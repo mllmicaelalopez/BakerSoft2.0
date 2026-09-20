@@ -2,10 +2,12 @@
 
 Sistema de gestión para panaderías. PHP puro (sin frameworks), MySQL y PDO.
 
-Estado actual: **autenticación completa, ABM de Producto y Tipo de Producto, Roles y
-Permisos, y envío real de email de recuperación**. El dashboard todavía usa datos mock
-(ventas, más vendidos, stock y próximas entregas): se reemplazan por consultas reales
-cuando existan los módulos de Ventas, Pedidos, etc.
+Estado actual: **autenticación completa, ABM de Producto y Tipo de Producto (con unidad
+de medida kg/unidad), Roles y Permisos, módulo de Pedidos completo (alta, modificación,
+consulta y cancelación), y envío real de email de recuperación**. El dashboard todavía
+usa datos mock (ventas, más vendidos, stock y próximas entregas): se reemplazan por
+consultas reales cuando el dashboard empiece a consultar los módulos ya existentes
+(Pedidos) y los que falten (Ventas, Stock).
 
 Funciona:
 
@@ -17,7 +19,14 @@ Funciona:
   módulo vive en `src/config/permisos.php`.
 - **ABM de Producto y Tipo de Producto** (`ProductoController`, `TipoProductoController`):
   alta, edición y baja lógica (nunca se borra, solo se apaga `activo`), reservado a
-  `administrador`.
+  `administrador`. Producto tiene unidad de medida (`kg` o `unidad`), que determina si
+  acepta cantidades decimales en un pedido.
+- **Pedidos** (`PedidoController`, tablas `pedido`, `detalle_pedido`, `cliente`,
+  `tipo_pedido`): alta y modificación reservadas a `administrador` y `cajero` (con
+  excepción de administrador para modificar pedidos "En preparación"); consulta abierta
+  a los 4 roles; cancelación (baja lógica, nunca se borra la fila) con motivo, con
+  excepción para que el propio cajero cancele su pedido reciente aunque su rol no tenga
+  permiso general de cancelación.
 
 ## Requisitos
 
@@ -54,6 +63,11 @@ mysql -u root -p < database/migrations/002_bloqueo_intentos.sql
 mysql -u root -p < database/migrations/003_tipo_producto.sql
 mysql -u root -p < database/migrations/004_producto.sql
 mysql -u root -p < database/migrations/005_roles.sql
+mysql -u root -p < database/migrations/006_tipo_pedido.sql
+mysql -u root -p < database/migrations/007_cliente.sql
+mysql -u root -p < database/migrations/008_pedido.sql
+mysql -u root -p < database/migrations/009_detalle_pedido.sql
+mysql -u root -p < database/migrations/010_producto_unidad_medida.sql
 ```
 
 Todas son idempotentes (se pueden correr más de una vez sin romper nada). Para tener
@@ -63,6 +77,16 @@ usuarios de prueba en cada rol, además corré:
 mysql -u root -p < database/usuario_prueba.sql
 mysql -u root -p < database/seed_usuarios_roles.sql
 ```
+
+Y para tener catálogo, clientes y pedidos de ejemplo con los que probar el sistema:
+
+```bash
+mysql -u root -p < database/seed_datos_prueba.sql
+```
+
+`seed_datos_prueba.sql` agrega categorías, productos, clientes y un segundo usuario
+cajero de forma idempotente, pero la parte de pedidos de ejemplo no es idempotente:
+pensado para correrse una sola vez.
 
 **3. Configurar las credenciales**
 
@@ -142,12 +166,13 @@ BakerSoft/
 │   │   ├── permisos.php    # CAPACIDADES: mapa de roles permitidos por módulo
 │   │   └── env.php         # Carga de .env (cargar_env(), env())
 │   ├── controllers/        # AuthController, DashboardController, ProductoController,
-│   │                       # TipoProductoController, UsuarioController
-│   ├── models/              # Usuario, Rol, Producto, TipoProducto
+│   │                       # TipoProductoController, UsuarioController, PedidoController
+│   ├── models/              # Usuario, Rol, Producto, TipoProducto, TipoPedido, Cliente,
+│   │                       # Pedido, DetallePedido
 │   ├── views/               # Plantillas PHP
 │   │   ├── layouts/         # app-layout (pantallas internas) / auth-layout / header / footer
 │   │   ├── auth/            # login, registro, recuperación de contraseña
-│   │   ├── producto/, tipo-producto/, usuario/  # ABMs (index + form)
+│   │   ├── producto/, tipo-producto/, usuario/, pedido/  # ABMs (index + form)
 │   │   ├── errors/          # 404, 403
 │   │   └── home.php         # Página de prueba de conexión
 │   └── helpers/
@@ -157,7 +182,8 @@ BakerSoft/
 │   ├── schema.sql          # Esquema inicial
 │   ├── migrations/         # Cambios incrementales, numerados y ejecutados en orden
 │   ├── usuario_prueba.sql  # Usuario de prueba (desarrollo local)
-│   └── seed_usuarios_roles.sql  # Un usuario de prueba por rol (desarrollo local)
+│   ├── seed_usuarios_roles.sql  # Un usuario de prueba por rol (desarrollo local)
+│   └── seed_datos_prueba.sql    # Catálogo, clientes y pedidos de ejemplo (desarrollo local)
 ├── vendor/                 # Dependencias de Composer (PHPMailer). No se versiona.
 ├── composer.json
 ├── .env.example             # Plantilla de variables de entorno (SMTP)

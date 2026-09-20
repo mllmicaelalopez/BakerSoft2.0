@@ -83,7 +83,7 @@ declare(strict_types=1);
             <div>
                 <h2 class="dash-bloque-titulo">Próximas entregas...</h2>
             </div>
-            <a class="dash-bloque-link" href="<?= e(base_url('pedidos')) ?>">Ver más...</a>
+            <a class="dash-bloque-link" href="<?= e(base_url('pedido')) ?>">Ver más...</a>
         </div>
 
         <div class="dash-tabla-scroll">
