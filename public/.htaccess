@@ -1,0 +1,16 @@
+# BakerSoft - routing amigable hacia el front controller.
+
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Si el archivo o la carpeta existen de verdad, se sirven tal cual.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Todo lo demás lo maneja index.php
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>

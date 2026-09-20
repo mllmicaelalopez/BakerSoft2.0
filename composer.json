@@ -1,0 +1,9 @@
+{
+    "name": "bakersoft/bakersoft",
+    "description": "BakerSoft - Sistema de gestion para panaderias",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "phpmailer/phpmailer": "^6.9"
+    }
+}

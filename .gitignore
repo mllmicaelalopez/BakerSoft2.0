@@ -1,0 +1,12 @@
+# Sistema operativo / editores
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/
+
+# Dependencias y logs
+/vendor/
+*.log
+
+# Credenciales locales (SMTP, etc.) - ver .env.example
+.env

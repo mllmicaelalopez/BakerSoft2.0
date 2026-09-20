@@ -1,0 +1,1081 @@
+/* BakerSoft - estilos base */
+
+:root {
+    --pan:        #c98b4b;
+    --pan-oscuro: #8a5a28;
+    --fondo:      #faf7f2;
+    --superficie: #ffffff;
+    --texto:      #2e2723;
+    --texto-tenue:#6f6459;
+    --borde:      #e6ded2;
+    --ok:         #2f8f4e;
+    --error:      #c0392b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    line-height: 1.55;
+}
+
+/* Barra superior */
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1.5rem;
+    background: var(--pan-oscuro);
+    color: #fff;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    background: var(--pan);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+}
+
+.topbar-tag {
+    margin-left: auto;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* Contenido */
+.container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+}
+
+h1 { margin: 0 0 0.25rem; font-size: 1.75rem; }
+h2 { margin: 0 0 0.75rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+h3 { margin: 1.25rem 0 0.5rem; font-size: 0.95rem; color: var(--texto-tenue); }
+
+.lead { margin: 0 0 1.75rem; color: var(--texto-tenue); }
+
+.card {
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-left: 4px solid var(--borde);
+    border-radius: 0.6rem;
+    padding: 1.25rem 1.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.card-ok    { border-left-color: var(--ok); }
+.card-error { border-left-color: var(--error); }
+
+.dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--texto-tenue);
+}
+
+.card-ok .dot    { background: var(--ok); }
+.card-error .dot { background: var(--error); }
+
+/* Lista de datos de conexión */
+.datos {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.35rem 1.25rem;
+    margin: 0;
+}
+
+.datos dt { color: var(--texto-tenue); font-size: 0.9rem; }
+.datos dd { margin: 0; font-family: Consolas, "Courier New", monospace; font-size: 0.9rem; }
+
+.tablas, .pasos { margin: 0; padding-left: 1.2rem; }
+.tablas li { font-family: Consolas, "Courier New", monospace; font-size: 0.9rem; }
+.pasos li { margin-bottom: 0.3rem; }
+
+code {
+    background: #f2ece3;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.88em;
+}
+
+pre.error {
+    background: #fdf1ef;
+    border: 1px solid #f2cec8;
+    color: var(--error);
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.4rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+}
+
+.hint { color: var(--texto-tenue); font-size: 0.9rem; }
+
+.link { color: var(--pan-oscuro); }
+
+.footer {
+    border-top: 1px solid var(--borde);
+    padding: 1rem 1.5rem;
+    text-align: center;
+    color: var(--texto-tenue);
+    font-size: 0.85rem;
+}
+
+/* ===========================================================================
+   Layout interno del sistema (app-layout.php): sidebar + panel de contenido.
+
+   Todo lo de acá abajo cuelga de .app-body, así que no toca las pantallas
+   viejas que usan el shell de layouts/header.php (home y errores).
+   Paleta alineada con auth.css, pero más suave: el contenido tiene que leerse.
+   =========================================================================== */
+
+:root {
+    --app-naranja:       #e07b1e;
+    --app-naranja-suave: #f6e0c8;
+    --app-marron-oscuro: #6d3a12;
+    --app-marron:        #8a5a28;
+    --app-marron-suave:  #9c7757;
+
+    --app-durazno-claro: #fffdfb;
+    --app-durazno:       #fbeedd;
+    --app-durazno-hondo: #f6ddc2;
+
+    --app-fondo:         #fbfaf9;
+    --app-superficie:    #ffffff;
+    --app-borde:         #ece3d8;
+    --app-texto:         #3a2a1c;
+
+    --app-alerta:        #c0392b;
+    --app-alerta-fondo:  #fdf1ef;
+    --app-alerta-borde:  #f4d3cd;
+
+    --app-sidebar-ancho: 260px;
+}
+
+.app-body {
+    margin: 0;
+    font-family: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--app-texto);
+    background: var(--app-fondo);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar
+   -------------------------------------------------------------------------- */
+
+.app-sidebar {
+    flex: 0 0 var(--app-sidebar-ancho);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.75rem 1.25rem;
+    border-right: 1px solid var(--app-borde);
+    background: linear-gradient(
+        160deg,
+        var(--app-durazno-claro) 0%,
+        var(--app-durazno) 55%,
+        var(--app-durazno-hondo) 100%
+    );
+}
+
+.app-marca-label {
+    margin: 0;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--app-marron-suave);
+}
+
+.app-marca-nombre {
+    margin: 0.15rem 0 0;
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1.1;
+    text-transform: uppercase;
+    color: var(--app-marron-oscuro);
+}
+
+/* Tarjeta de usuario */
+.app-usuario {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem;
+    border: 1px solid rgba(138, 90, 40, 0.12);
+    border-radius: 0.7rem;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.app-usuario-datos { min-width: 0; }
+
+.app-usuario-nombre {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--app-marron-oscuro);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-usuario-email {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--app-marron-suave);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-avatar {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: var(--app-naranja-suave);
+    color: var(--app-marron-oscuro);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.app-avatar-chico {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.7rem;
+}
+
+/* Navegación */
+.app-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.app-nav-item {
+    display: block;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.55rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--app-marron);
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.app-nav-item:hover {
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--app-marron-oscuro);
+}
+
+.app-nav-item.is-activo {
+    background: var(--app-naranja);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Grupo desplegable del menú (<details> nativo, sin JS) */
+.app-nav-grupo summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.app-nav-grupo summary::-webkit-details-marker { display: none; }
+
+/* Flecha propia, que rota al abrirse */
+.app-nav-grupo summary::after {
+    content: "";
+    margin-left: auto;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.15s;
+}
+
+.app-nav-grupo[open] summary::after { transform: rotate(45deg); }
+
+.app-nav-item.is-activo-grupo {
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--app-marron-oscuro);
+    font-weight: 600;
+}
+
+.app-subnav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin: 0.15rem 0 0.35rem 0.7rem;
+    padding-left: 0.6rem;
+    border-left: 2px solid rgba(138, 90, 40, 0.16);
+}
+
+.app-subnav-item {
+    display: block;
+    padding: 0.45rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.84rem;
+    color: var(--app-marron);
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.app-subnav-item:hover {
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--app-marron-oscuro);
+}
+
+.app-subnav-item.is-activo {
+    background: var(--app-naranja);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Empuja el pie al fondo del sidebar */
+.app-sidebar-pie {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(138, 90, 40, 0.14);
+}
+
+.app-nav-salir { color: var(--app-alerta); }
+
+.app-nav-salir:hover {
+    background: var(--app-alerta-fondo);
+    color: var(--app-alerta);
+}
+
+/* --------------------------------------------------------------------------
+   Panel de contenido
+   -------------------------------------------------------------------------- */
+
+.app-principal {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--app-superficie);
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.15rem clamp(1.25rem, 3vw, 2rem);
+    border-bottom: 1px solid var(--app-borde);
+}
+
+.app-header-titulo {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--app-marron-oscuro);
+}
+
+.app-header .app-avatar { margin-left: auto; }
+
+.app-contenido {
+    flex: 1 1 auto;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: var(--app-fondo);
+}
+
+/* --------------------------------------------------------------------------
+   Dashboard: grilla de 2x2
+   -------------------------------------------------------------------------- */
+
+.dash-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.dash-bloque {
+    display: flex;
+    flex-direction: column;
+    /* Sin esto el min-width:auto de los items de grid deja que la tabla
+       ensanche el bloque y desborde la página en vez de scrollear adentro. */
+    min-width: 0;
+    padding: 1.25rem 1.35rem;
+    border: 1px solid var(--app-borde);
+    border-radius: 0.85rem;
+    background: var(--app-superficie);
+    box-shadow: 0 1px 2px rgba(109, 58, 18, 0.04);
+}
+
+.dash-bloque-cab {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.dash-bloque-titulo {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--app-marron-oscuro);
+}
+
+.dash-bloque-sub {
+    margin: 0.1rem 0 0;
+    font-size: 0.78rem;
+    color: var(--app-marron-suave);
+}
+
+/* Dato chico alineado a la derecha del encabezado del bloque */
+.dash-bloque-meta {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--app-marron-suave);
+    white-space: nowrap;
+}
+
+.dash-bloque-link {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: var(--app-naranja);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.dash-bloque-link:hover { text-decoration: underline; }
+
+/* Bloque 1: área todavía sin gráfico */
+.dash-placeholder {
+    display: grid;
+    place-items: center;
+    min-height: 8.5rem;
+    border: 1px dashed var(--app-borde);
+    border-radius: 0.6rem;
+    background: #fdfbf8;
+    color: var(--app-marron-suave);
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 0.75rem;
+}
+
+.dash-etiquetas {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+}
+
+.dash-etiqueta {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--app-marron-suave);
+}
+
+/* Bloque 2: lista de más vendidos */
+.dash-lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.dash-lista li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.45rem 0;
+    font-size: 0.88rem;
+    border-bottom: 1px solid #f5efe7;
+}
+
+.dash-lista li:last-child { border-bottom: none; }
+
+.dash-lista-cantidad {
+    margin-left: auto;
+    font-weight: 600;
+    color: var(--app-marron-oscuro);
+    white-space: nowrap;
+}
+
+/* Bloque 3: stock */
+.dash-alerta {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--app-alerta-borde);
+    border-radius: 0.6rem;
+    background: var(--app-alerta-fondo);
+    color: var(--app-alerta);
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.dash-badge {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 0.4rem;
+    border-radius: 50%;
+    background: var(--app-alerta);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.dash-datos {
+    margin: 0.9rem 0 0;
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.88rem;
+}
+
+.dash-dato {
+    display: flex;
+    gap: 0.5rem;
+    color: var(--app-marron-suave);
+}
+
+.dash-dato strong {
+    margin-left: auto;
+    color: var(--app-marron-oscuro);
+}
+
+/* Bloque 4: tabla de entregas */
+.dash-tabla-scroll { overflow-x: auto; }
+
+.dash-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.dash-tabla th {
+    text-align: left;
+    padding: 0.4rem 0.6rem 0.5rem 0;
+    border-bottom: 1px solid var(--app-borde);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--app-marron-suave);
+    white-space: nowrap;
+}
+
+.dash-tabla td {
+    padding: 0.55rem 0.6rem 0.55rem 0;
+    border-bottom: 1px solid #f5efe7;
+}
+
+.dash-tabla tr:last-child td { border-bottom: none; }
+
+/* Contacto y Cantidad quedan feos partidos en dos líneas; el resto sí puede
+   envolver. Si no entra, el contenedor scrollea. */
+.dash-tabla td:nth-child(2),
+.dash-tabla td:nth-child(4) { white-space: nowrap; }
+
+.dash-tabla td:last-child,
+.dash-tabla th:last-child { padding-right: 0; }
+
+/* --------------------------------------------------------------------------
+   ABM: listados y formularios (tipo de producto y los que vengan)
+   -------------------------------------------------------------------------- */
+
+.abm-alerta {
+    margin: 0 0 1.1rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid transparent;
+    border-radius: 0.55rem;
+    font-size: 0.87rem;
+}
+
+.abm-alerta-ok    { background: #eef8f1; border-color: #cfe8d8; color: #2f7d4f; }
+.abm-alerta-error { background: var(--app-alerta-fondo); border-color: var(--app-alerta-borde); color: var(--app-alerta); }
+
+.abm-cab {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.1rem;
+}
+
+.abm-cab-texto {
+    margin: 0;
+    font-size: 0.87rem;
+    color: var(--app-marron-suave);
+}
+
+.abm-btn {
+    display: inline-block;
+    padding: 0.6rem 1.05rem;
+    border: none;
+    border-radius: 0.55rem;
+    background: var(--app-naranja);
+    color: #fff;
+    font: inherit;
+    font-size: 0.87rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.abm-cab .abm-btn { margin-left: auto; }
+
+.abm-btn:hover { background: #c96a12; }
+
+.abm-btn-secundario {
+    display: inline-block;
+    padding: 0.6rem 1.05rem;
+    border: 1px solid var(--app-borde);
+    border-radius: 0.55rem;
+    background: var(--app-superficie);
+    color: var(--app-marron);
+    font: inherit;
+    font-size: 0.87rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.abm-btn-secundario:hover { border-color: var(--app-marron-suave); color: var(--app-marron-oscuro); }
+
+.abm-link {
+    color: var(--app-naranja);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.abm-link:hover { text-decoration: underline; }
+
+/* Barra de filtros */
+.abm-filtros {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.1rem;
+}
+
+.abm-buscador {
+    position: relative;
+    flex: 1 1 16rem;
+    min-width: 0;
+}
+
+.abm-buscador-icono {
+    position: absolute;
+    top: 50%;
+    left: 0.75rem;
+    width: 1rem;
+    height: 1rem;
+    transform: translateY(-50%);
+    color: var(--app-marron-suave);
+    pointer-events: none;
+}
+
+.abm-buscador-input {
+    width: 100%;
+    padding: 0.6rem 0.85rem 0.6rem 2.25rem;
+    border: 1px solid var(--app-borde);
+    border-radius: 0.55rem;
+    background: var(--app-superficie);
+    font: inherit;
+    font-size: 0.88rem;
+    color: var(--app-texto);
+}
+
+.abm-buscador-input:focus,
+.abm-select:focus,
+.abm-input:focus {
+    outline: none;
+    border-color: var(--app-naranja);
+    box-shadow: 0 0 0 3px rgba(224, 123, 30, 0.16);
+}
+
+.abm-select {
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--app-borde);
+    border-radius: 0.55rem;
+    background: var(--app-superficie);
+    font: inherit;
+    font-size: 0.88rem;
+    color: var(--app-texto);
+}
+
+/* Tabla */
+.abm-tabla-caja {
+    border: 1px solid var(--app-borde);
+    border-radius: 0.85rem;
+    background: var(--app-superficie);
+    overflow: hidden;
+}
+
+.abm-tabla-scroll { overflow-x: auto; }
+
+.abm-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.abm-tabla th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--app-borde);
+    background: #fdfbf8;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--app-marron-suave);
+    white-space: nowrap;
+}
+
+.abm-tabla td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid #f5efe7;
+    vertical-align: middle;
+}
+
+.abm-tabla tr:last-child td { border-bottom: none; }
+
+.abm-codigo {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.85rem;
+    color: var(--app-marron-oscuro);
+    white-space: nowrap;
+}
+
+.abm-descripcion {
+    display: block;
+    font-size: 0.76rem;
+    color: var(--app-marron-suave);
+}
+
+.abm-col-acciones { width: 1%; white-space: nowrap; }
+
+.abm-badge {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+
+.abm-badge-activo   { background: var(--app-naranja); color: #fff; }
+.abm-badge-inactivo { background: #ebe6df; color: #7c7168; }
+
+.abm-acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.abm-acciones form { margin: 0; }
+
+.abm-icono {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--app-borde);
+    border-radius: 0.45rem;
+    background: var(--app-superficie);
+    color: var(--app-marron);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.abm-icono svg { width: 1rem; height: 1rem; }
+
+.abm-icono:hover {
+    background: var(--app-naranja-suave);
+    color: var(--app-marron-oscuro);
+    border-color: var(--app-naranja-suave);
+}
+
+/* Apagar (baja lógica) y prender: nunca borran */
+.abm-icono-apagar:hover { background: var(--app-alerta-fondo); border-color: var(--app-alerta-borde); color: var(--app-alerta); }
+.abm-icono-prender      { color: #2f7d4f; }
+.abm-icono-prender:hover { background: #eef8f1; border-color: #cfe8d8; color: #2f7d4f; }
+
+.abm-vacio {
+    margin: 0;
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: var(--app-marron-suave);
+    font-size: 0.9rem;
+}
+
+/* Solo para lectores de pantalla */
+.abm-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Formulario */
+.abm-form-caja {
+    max-width: 34rem;
+    padding: 1.5rem;
+    border: 1px solid var(--app-borde);
+    border-radius: 0.85rem;
+    background: var(--app-superficie);
+}
+
+.abm-campo { margin-bottom: 1.1rem; }
+
+.abm-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--app-marron-oscuro);
+}
+
+.abm-requerido {
+    color: var(--app-alerta);
+    margin-left: 0.15rem;
+}
+
+.abm-input {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--app-borde);
+    border-radius: 0.55rem;
+    background: var(--app-superficie);
+    font: inherit;
+    font-size: 0.9rem;
+    color: var(--app-texto);
+}
+
+.abm-input:disabled {
+    background: #f7f3ee;
+    color: var(--app-marron-suave);
+    cursor: not-allowed;
+}
+
+.abm-textarea { resize: vertical; }
+
+.abm-input-error,
+.abm-input-error:focus { border-color: #d98b80; }
+
+.abm-ayuda {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--app-marron-suave);
+}
+
+.abm-ayuda-error { color: var(--app-alerta); }
+
+.abm-form-pie {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1.4rem;
+}
+
+.abm-precio {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Formulario de dos columnas (datos + lateral con imagen y estado) */
+.abm-form-ancho { max-width: 52rem; }
+
+.abm-form-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 1.75rem;
+}
+
+.abm-form-col { min-width: 0; }
+
+.abm-campo:last-child { margin-bottom: 0; }
+
+/* Grupo de radios (ej.: cliente existente / cliente nuevo en Pedidos) */
+.abm-campo-radios {
+    display: flex;
+    gap: 1.25rem;
+    font-size: 0.9rem;
+    color: var(--app-texto);
+}
+
+.abm-campo-radios label { display: flex; align-items: center; gap: 0.4rem; }
+
+/* Filas de producto + cantidad del alta de pedido */
+.abm-fila-producto {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-bottom: 0.6rem;
+}
+
+.abm-fila-producto .abm-input:first-child { flex: 1.4; }
+.abm-fila-producto .abm-input:nth-child(2) { flex: 0.7; }
+
+/* Precio con el signo pegado al input */
+.abm-input-moneda {
+    display: flex;
+    align-items: stretch;
+}
+
+.abm-moneda-signo {
+    display: grid;
+    place-items: center;
+    padding: 0 0.7rem;
+    border: 1px solid var(--app-borde);
+    border-right: none;
+    border-radius: 0.55rem 0 0 0.55rem;
+    background: #fdfbf8;
+    color: var(--app-marron-suave);
+    font-size: 0.9rem;
+}
+
+.abm-input-moneda .abm-input {
+    border-radius: 0 0.55rem 0.55rem 0;
+}
+
+/* Bloque de imagen (todavía sin funcionalidad) */
+.abm-imagen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1.25rem 1rem;
+    border: 1px dashed var(--app-borde);
+    border-radius: 0.7rem;
+    background: #fdfbf8;
+    text-align: center;
+}
+
+.abm-imagen svg {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--app-marron-suave);
+    opacity: 0.7;
+}
+
+.abm-imagen .abm-btn-secundario:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.abm-imagen .abm-ayuda { margin-top: 0; }
+
+/* Toggle de estado (informativo, siempre deshabilitado en el form) */
+.abm-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    cursor: not-allowed;
+}
+
+.abm-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+
+.abm-toggle-pista {
+    position: relative;
+    width: 2.4rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    background: #ded6cc;
+    transition: background-color 0.15s;
+}
+
+.abm-toggle-pista::after {
+    content: "";
+    position: absolute;
+    top: 0.17rem;
+    left: 0.17rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.15s;
+}
+
+.abm-toggle input:checked + .abm-toggle-pista { background: var(--app-naranja); }
+
+.abm-toggle input:checked + .abm-toggle-pista::after { transform: translateX(1.05rem); }
+
+.abm-toggle-texto {
+    font-size: 0.85rem;
+    color: var(--app-marron);
+}
+
+@media (max-width: 700px) {
+    .abm-form-cols { grid-template-columns: 1fr; gap: 1.25rem; }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+    .dash-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 780px) {
+    /* El sidebar pasa a ser una franja arriba. */
+    .app { flex-direction: column; }
+
+    .app-sidebar {
+        flex: 0 0 auto;
+        gap: 1rem;
+        border-right: none;
+        border-bottom: 1px solid var(--app-borde);
+    }
+
+    .app-nav { flex-direction: row; flex-wrap: wrap; }
+
+    .app-sidebar-pie {
+        margin-top: 0;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .dash-etiquetas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

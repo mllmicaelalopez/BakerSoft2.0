@@ -1,0 +1,399 @@
+/* ---------------------------------------------------------------------------
+   BakerSoft - Pantallas de autenticación (login, registro, recuperación).
+   Hoja independiente: las vistas de auth no cargan app.css.
+
+   Los marrones vienen de la paleta de app.css (--pan-oscuro #8a5a28) y el
+   naranja principal es el de los botones del sistema.
+   --------------------------------------------------------------------------- */
+
+:root {
+    /* Naranja principal (botones y acentos) */
+    --auth-naranja:        #e07b1e;
+    --auth-naranja-fuerte: #c96a12;
+    --auth-naranja-suave:  #f6e0c8;
+
+    /* Marrones cálidos */
+    --auth-marron-oscuro:  #6d3a12;
+    --auth-marron:         #8a5a28;
+    --auth-marron-suave:   #9c7757;
+
+    /* Fondo: rampa de durazno, de casi blanco en la esquina superior
+       izquierda al tono más saturado en la inferior derecha. */
+    --auth-durazno-claro:  #fffdfb;
+    --auth-durazno-suave:  #fdf4ea;
+    --auth-durazno:        #f9e6d0;
+    --auth-durazno-medio:  #f2d3ae;
+    --auth-durazno-calido: #eab887;
+
+    /* Superficies */
+    --auth-tarjeta:        #ffffff;
+    --auth-borde:          #e7dbcc;
+    --auth-texto:          #3a2a1c;
+    --auth-placeholder:    #b9a894;
+
+    --auth-radio:          1rem;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    /* Poppins se carga por Google Fonts desde el <head> del layout. */
+    font-family: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--auth-texto);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    /* Tinte de respaldo por si se ve área fuera del contenedor (overscroll). */
+    background: var(--auth-durazno-claro);
+}
+
+/* ---------------------------------------------------------------------------
+   Fondo único con gradiente: cubre toda la pantalla.
+   Encima se apoyan el bloque de marca y la tarjeta; ninguno de los dos
+   define un panel de fondo propio (solo la tarjeta es blanca).
+   --------------------------------------------------------------------------- */
+
+.auth {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: clamp(2rem, 5vw, 4rem);
+    padding: clamp(2rem, 5vw, 4.5rem);
+    background: linear-gradient(
+        135deg,
+        var(--auth-durazno-claro)  0%,
+        var(--auth-durazno-suave)  25%,
+        var(--auth-durazno)        50%,
+        var(--auth-durazno-medio)  75%,
+        var(--auth-durazno-calido) 100%
+    );
+}
+
+/* Bloque de marca: tercio izquierdo, centrado verticalmente, sin fondo. */
+.auth-marca {
+    justify-self: start;
+    max-width: 30rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Contenido del panel de marca
+   --------------------------------------------------------------------------- */
+
+.auth-marca-label {
+    margin: 0 0 0.9rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--auth-marron-suave);
+}
+
+.auth-marca-titulo {
+    margin: 0 0 1rem;
+    font-size: clamp(1.9rem, 3.2vw, 2.75rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--auth-marron-oscuro);
+}
+
+.auth-marca-texto {
+    margin: 0;
+    max-width: 34ch;
+    color: var(--auth-marron-suave);
+    font-size: 0.95rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Tarjeta
+   --------------------------------------------------------------------------- */
+
+/* Único bloque con fondo propio: contrasta contra el gradiente. */
+.auth-tarjeta {
+    justify-self: start;
+    width: min(100%, 26rem);
+    padding: 2.25rem clamp(1.5rem, 4vw, 2.25rem);
+    background: var(--auth-tarjeta);
+    border-radius: var(--auth-radio);
+    box-shadow:
+        0 20px 45px -22px rgba(109, 58, 18, 0.30),
+        0 2px 8px rgba(109, 58, 18, 0.05);
+}
+
+/* Círculo con ícono arriba de la tarjeta */
+.auth-avatar {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin: 0 auto 1.1rem;
+    border-radius: 50%;
+    background: var(--auth-naranja-suave);
+    color: var(--auth-marron);
+}
+
+.auth-avatar svg { width: 1.5rem; height: 1.5rem; }
+
+.auth-titulo {
+    margin: 0 0 0.35rem;
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--auth-marron-oscuro);
+}
+
+.auth-subtitulo {
+    margin: 0 0 1.6rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--auth-marron-suave);
+}
+
+/* ---------------------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------------------- */
+
+.auth-campo { margin-bottom: 1.1rem; }
+
+.auth-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--auth-marron-oscuro);
+}
+
+.auth-input {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    font: inherit;
+    font-size: 0.92rem;
+    color: var(--auth-texto);
+    background: #fff;
+    border: 1px solid var(--auth-borde);
+    border-radius: 0.55rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-input::placeholder { color: var(--auth-placeholder); }
+
+.auth-input:focus {
+    outline: none;
+    border-color: var(--auth-naranja);
+    box-shadow: 0 0 0 3px rgba(224, 123, 30, 0.18);
+}
+
+/* Input con botón adosado (ej. mostrar/ocultar contraseña) */
+.auth-input-grupo {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+.auth-input-grupo .auth-input { flex: 1 1 auto; }
+
+.auth-input-accion {
+    flex: 0 0 auto;
+    padding: 0 0.8rem;
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--auth-marron-suave);
+    background: #fff;
+    border: 1px solid var(--auth-borde);
+    border-radius: 0.55rem;
+    cursor: pointer;
+}
+
+.auth-input-accion:hover { color: var(--auth-marron-oscuro); }
+
+.auth-ayuda {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--auth-marron-suave);
+}
+
+/* Error de un campo puntual (el mensaje genérico va en .auth-alerta). */
+.auth-ayuda-error { color: #b03a2b; }
+
+.auth-input-error,
+.auth-input-error:focus {
+    border-color: #d98b80;
+}
+
+.auth-input-error:focus {
+    box-shadow: 0 0 0 3px rgba(176, 58, 43, 0.15);
+}
+
+/* Fila de opciones: checkbox a la izquierda, links a la derecha */
+/* Los tamaños están ajustados para que la fila entre en una sola línea con
+   Poppins dentro de una tarjeta de 26rem; si no entra, hace wrap. */
+.auth-opciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.1rem 0 1.4rem;
+    font-size: 0.78rem;
+}
+
+.auth-recordarme {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--auth-marron-suave);
+    cursor: pointer;
+}
+
+.auth-recordarme input { accent-color: var(--auth-naranja); }
+
+.auth-links {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-left: auto;
+}
+
+.auth-link {
+    color: var(--auth-naranja);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-link:hover { color: var(--auth-naranja-fuerte); text-decoration: underline; }
+
+.auth-btn {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--auth-naranja);
+    border: none;
+    border-radius: 0.55rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.auth-btn:hover { background: var(--auth-naranja-fuerte); }
+
+.auth-btn:focus-visible {
+    outline: 2px solid var(--auth-naranja-fuerte);
+    outline-offset: 2px;
+}
+
+/* Mensajes (validación, avisos) */
+.auth-alerta {
+    margin-bottom: 1.2rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.55rem;
+    font-size: 0.85rem;
+    border: 1px solid transparent;
+}
+
+.auth-alerta-error { background: #fdf1ef; border-color: #f2cec8; color: #b03a2b; }
+.auth-alerta-ok    { background: #eef8f1; border-color: #cfe8d8; color: #2f7d4f; }
+
+/* ---------------------------------------------------------------------------
+   Modal sobre la pantalla de auth (ej. "Olvidé mi contraseña" sobre el login)
+   --------------------------------------------------------------------------- */
+
+.auth-modal-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem 1.25rem;
+    background: rgba(61, 33, 12, 0.42);
+    backdrop-filter: blur(2px);
+}
+
+.auth-modal {
+    position: relative;
+    width: min(100%, 26rem);
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+    padding: 2.25rem clamp(1.5rem, 4vw, 2.25rem);
+    background: var(--auth-tarjeta);
+    border-radius: var(--auth-radio);
+    box-shadow:
+        0 28px 60px -25px rgba(61, 33, 12, 0.55),
+        0 2px 10px rgba(61, 33, 12, 0.12);
+}
+
+/* La X es un link a /login: cerrar funciona aunque no haya JS. */
+.auth-modal-cerrar {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.9rem;
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    font-size: 1.05rem;
+    line-height: 1;
+    color: var(--auth-marron-suave);
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.auth-modal-cerrar:hover {
+    background: var(--auth-naranja-suave);
+    color: var(--auth-marron-oscuro);
+}
+
+/* Caja del link de recuperación mientras no se manden emails de verdad. */
+.auth-dev-link {
+    margin: 0 0 1.2rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px dashed var(--auth-borde);
+    border-radius: 0.55rem;
+    background: #fdfaf6;
+    font-size: 0.75rem;
+    color: var(--auth-marron-suave);
+    word-break: break-all;
+}
+
+.auth-dev-link strong {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--auth-marron-oscuro);
+}
+
+/* Pie de la tarjeta */
+.auth-pie {
+    margin: 1.35rem 0 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--auth-marron-suave);
+}
+
+/* ---------------------------------------------------------------------------
+   Responsive: en pantallas angostas se oculta el bloque de marca y la tarjeta
+   queda centrada sobre el mismo gradiente, con márgenes laterales.
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 860px) {
+    .auth {
+        grid-template-columns: 1fr;
+        padding: 1.75rem 1.25rem;
+    }
+
+    .auth-marca { display: none; }
+
+    .auth-tarjeta {
+        justify-self: center;
+        width: min(100%, 26rem);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+}
