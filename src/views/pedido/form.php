@@ -62,7 +62,7 @@ $opcionesProducto = static function (string $seleccionado) use ($productosDispon
             '<option value="%s"%s>%s</option>',
             e($valor),
             $seleccionado === $valor ? ' selected' : '',
-            e($prod['nombre'])
+            e($prod['nombre'] . ' (' . ($prod['unidad_medida'] === 'kg' ? 'kg' : 'unidad') . ')')
         );
     }
 
@@ -252,6 +252,7 @@ $opcionesProducto = static function (string $seleccionado) use ($productosDispon
 
         <div class="abm-campo">
             <span class="abm-label">Productos<span class="abm-requerido">*</span></span>
+            <span class="abm-ayuda">La cantidad se carga en kg para productos por peso, o en unidades enteras para el resto (lo indica cada producto en la lista).</span>
 
             <div id="productos-filas">
                 <?php foreach ($productos as $i => $fila): ?>

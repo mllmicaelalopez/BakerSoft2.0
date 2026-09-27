@@ -12,6 +12,10 @@ CREATE DATABASE IF NOT EXISTS `bakersoft_db`
 
 USE `bakersoft_db`;
 
+-- Los textos con tilde ("En preparación", "Fogón", etc.) se guardan bien
+-- aunque el cliente de MySQL de la PC tenga otra codificación por defecto.
+SET NAMES utf8mb4;
+
 -- ---------------------------------------------------------------------------
 -- Tabla: usuarios
 -- Cuentas que acceden al sistema. Los campos intentos_fallidos y

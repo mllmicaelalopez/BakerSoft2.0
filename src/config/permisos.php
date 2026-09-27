@@ -23,9 +23,10 @@ const CAPACIDADES = [
     //   cajero pueden crear o editar un pedido.
     // - 'pedido-consulta': listado y detalle, solo lectura (HU-11). Los
     //   cuatro roles pueden consultar.
-    // La cancelación (HU-12) todavía no tiene su propia clave definida; si
-    // termina teniendo un conjunto de roles distinto de 'pedido', separarla
-    // en una tercera clave en vez de reusar alguna de estas dos.
+    // - Cancelación (HU-12): usa 'pedido' (administrador y cajero), porque es
+    //   el mismo conjunto de roles. La restricción extra del cajero (solo sus
+    //   propios pedidos, dentro de los 30 minutos) no es de rol sino de cada
+    //   pedido puntual, y la resuelve PedidoController::puedeCancelar().
     'pedido'          => ['administrador', 'cajero'],
     'pedido-consulta' => ['administrador', 'cajero', 'repartidor', 'maestro_panadero'],
     // A futuro: 'reparto' => ['administrador', 'repartidor'], etc.

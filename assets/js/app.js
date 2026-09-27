@@ -137,7 +137,104 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    /* --- Campos obligatorios (HU-09): se revisan antes de enviar ---
+       Si falta algo, se muestra el error debajo de cada campo afectado y la
+       solicitud no sale hacia el servidor. Los textos son los mismos que
+       devuelve PedidoController::validar(), así el usuario ve lo mismo sea
+       quien sea el que detecte el error. El servidor sigue validando todo
+       igual (defensa en profundidad): esto no lo reemplaza. */
+
+    function limpiarErrores() {
+        form.querySelectorAll('.abm-ayuda-error').forEach(function (msj) {
+            msj.remove();
+        });
+
+        form.querySelectorAll('.abm-input-error').forEach(function (campo) {
+            campo.classList.remove('abm-input-error');
+        });
+    }
+
+    function marcarError(campo, mensaje, contenedor) {
+        var msj = document.createElement('span');
+        msj.className = 'abm-ayuda abm-ayuda-error';
+        msj.textContent = mensaje;
+
+        if (campo) {
+            campo.classList.add('abm-input-error');
+        }
+
+        (contenedor || campo.closest('.abm-campo')).appendChild(msj);
+    }
+
+    function validarObligatorios() {
+        var hayErrores = false;
+        var radioNuevo = document.getElementById('modo-cliente-nuevo');
+        var esClienteNuevo = radioNuevo && radioNuevo.checked;
+
+        function revisar(id, mensaje) {
+            var campo = document.getElementById(id);
+
+            if (campo && !campo.disabled && campo.value.trim() === '') {
+                marcarError(campo, mensaje);
+                hayErrores = true;
+            }
+        }
+
+        if (esClienteNuevo) {
+            revisar('cliente_nombre', 'Este campo es obligatorio');
+            revisar('cliente_tipo', 'Elegí un tipo de cliente');
+        } else {
+            revisar('id_cliente', 'Elegí un cliente');
+        }
+
+        revisar('id_tipo_pedido', 'Elegí un tipo de pedido');
+        revisar('fecha_entrega', 'Este campo es obligatorio');
+
+        if (filas && btnAgregar) {
+            var mensajeProductos = '';
+            var algunaCompleta = false;
+
+            filas.querySelectorAll('.abm-fila-producto').forEach(function (fila) {
+                var producto = fila.querySelector('select').value;
+                var cantidad = fila.querySelector('input').value.trim();
+
+                if (producto !== '' && cantidad !== '') {
+                    algunaCompleta = true;
+                } else if (producto === '' && cantidad !== '' && !mensajeProductos) {
+                    mensajeProductos = 'Elegí un producto válido en cada fila';
+                } else if (producto !== '' && cantidad === '' && !mensajeProductos) {
+                    mensajeProductos = 'La cantidad de cada producto debe ser un número mayor a cero';
+                }
+            });
+
+            if (!mensajeProductos && !algunaCompleta) {
+                mensajeProductos = 'Agregá al menos un producto';
+            }
+
+            if (mensajeProductos) {
+                marcarError(null, mensajeProductos, btnAgregar.closest('.abm-campo'));
+                hayErrores = true;
+            }
+        }
+
+        return !hayErrores;
+    }
+
     form.addEventListener('submit', function (evento) {
+        limpiarErrores();
+
+        if (!validarObligatorios()) {
+            evento.preventDefault();
+
+            var primerError = form.querySelector('.abm-ayuda-error');
+
+            if (primerError) {
+                primerError.scrollIntoView({ block: 'center' });
+            }
+
+            return;
+        }
+
         if (!aviso || !inputConfirmar) {
             return;
         }

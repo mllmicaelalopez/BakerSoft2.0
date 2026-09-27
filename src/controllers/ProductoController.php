@@ -66,6 +66,7 @@ final class ProductoController
                 'codigo'           => '',
                 'id_tipo_producto' => '',
                 'nombre'           => '',
+                'unidad_medida'    => 'unidad',
                 'precio'           => '',
                 'descripcion'      => '',
                 'activo'           => 1,
@@ -111,6 +112,7 @@ final class ProductoController
                 'codigo'           => $campos['codigo'],
                 'id_tipo_producto' => (int) $campos['id_tipo_producto'],
                 'nombre'           => $campos['nombre'],
+                'unidad_medida'    => $campos['unidad_medida'],
                 'precio'           => $campos['precio'],
                 'descripcion'      => $campos['descripcion'],
             ]);
@@ -201,6 +203,7 @@ final class ProductoController
                 'producto' => array_merge($producto, [
                     'id_tipo_producto' => $campos['id_tipo_producto'],
                     'nombre'           => $campos['nombre'],
+                    'unidad_medida'    => $campos['unidad_medida'],
                     'precio'           => $campos['precio'],
                     'descripcion'      => $campos['descripcion'],
                 ]),
@@ -211,6 +214,7 @@ final class ProductoController
         Producto::actualizar($id, [
             'id_tipo_producto' => (int) $campos['id_tipo_producto'],
             'nombre'           => $campos['nombre'],
+            'unidad_medida'    => $campos['unidad_medida'],
             'precio'           => $campos['precio'],
             'descripcion'      => $campos['descripcion'],
         ]);
@@ -261,7 +265,7 @@ final class ProductoController
     /* ----------------------------------------------------------------------- */
 
     /**
-     * @return array{codigo: string, id_tipo_producto: string, nombre: string, precio: string, descripcion: string}
+     * @return array{codigo: string, id_tipo_producto: string, nombre: string, unidad_medida: string, precio: string, descripcion: string}
      */
     private function camposDelPost(): array
     {
@@ -269,6 +273,7 @@ final class ProductoController
             'codigo'           => trim((string) ($_POST['codigo'] ?? '')),
             'id_tipo_producto' => trim((string) ($_POST['id_tipo_producto'] ?? '')),
             'nombre'           => trim((string) ($_POST['nombre'] ?? '')),
+            'unidad_medida'    => trim((string) ($_POST['unidad_medida'] ?? '')),
             // La coma decimal se normaliza acá, en la entrada, para que el
             // valor que se valida sea exactamente el que va a la base. MySQL
             // rechaza "1850,50" en una columna DECIMAL.
@@ -299,6 +304,10 @@ final class ProductoController
         } elseif (!ctype_digit($campos['id_tipo_producto'])
             || TipoProducto::buscarPorId((int) $campos['id_tipo_producto']) === null) {
             $errores['id_tipo_producto'] = 'La categoría seleccionada no existe';
+        }
+
+        if (!in_array($campos['unidad_medida'], ['kg', 'unidad'], true)) {
+            $errores['unidad_medida'] = 'Elegí una unidad de medida válida';
         }
 
         // Llega ya normalizado desde camposDelPost().
@@ -356,6 +365,7 @@ final class ProductoController
             'codigo'           => $campos['codigo'],
             'id_tipo_producto' => $campos['id_tipo_producto'],
             'nombre'           => $campos['nombre'],
+            'unidad_medida'    => $campos['unidad_medida'],
             'precio'           => $campos['precio'],
             'descripcion'      => $campos['descripcion'],
             'activo'           => 1,

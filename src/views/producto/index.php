@@ -95,7 +95,10 @@ $flash = flash_get();
                                     <span class="abm-descripcion">categoría inactiva</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="abm-precio">$ <?= e(number_format((float) $producto['precio'], 2, ',', '.')) ?></td>
+                            <td class="abm-precio">
+                                $ <?= e(number_format((float) $producto['precio'], 2, ',', '.')) ?>
+                                <span class="abm-descripcion">/ <?= $producto['unidad_medida'] === 'kg' ? 'kg' : 'u' ?></span>
+                            </td>
                             <td>
                                 <span class="abm-badge <?= $activo ? 'abm-badge-activo' : 'abm-badge-inactivo' ?>">
                                     <?= $activo ? 'Activo' : 'Inactivo' ?>

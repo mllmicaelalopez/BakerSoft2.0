@@ -324,6 +324,16 @@ final class PedidoController
             $this->validarProductos($campos['productos'])
         );
 
+        // Mismo criterio que el alta (store()): una fecha de entrega nueva no
+        // puede quedar en el pasado. Solo se revisa si la fecha cambió, para no
+        // trabar la edición de productos de un pedido cuya fecha original ya
+        // pasó (la fecha vieja se deja como está).
+        $fechaCambio = $campos['fechaEntregaRaw'] !== $this->formatearFechaLocal((string) $pedido['fecha_entrega']);
+
+        if (!isset($errores['fecha_entrega']) && $fechaCambio && $campos['fechaEntregaDt'] < new \DateTime()) {
+            $errores['fecha_entrega'] = 'La fecha de entrega no puede ser anterior a este momento.';
+        }
+
         if ($errores !== []) {
             http_response_code(400);
             $this->showEditForm($id, [
@@ -465,9 +475,7 @@ final class PedidoController
         }
 
         $fechaEntregaRaw = trim((string) ($_POST['fecha_entrega'] ?? ''));
-        $fechaEntregaDt  = $fechaEntregaRaw !== ''
-            ? (\DateTime::createFromFormat('Y-m-d\TH:i', $fechaEntregaRaw) ?: null)
-            : null;
+        $fechaEntregaDt  = $this->parsearFechaEntrega($fechaEntregaRaw);
 
         $productos = [];
 
@@ -574,6 +582,28 @@ final class PedidoController
     }
 
     /**
+     * "2026-09-20T10:00" (input datetime-local) -> DateTime, o null si viene
+     * vacía o con una fecha imposible. createFromFormat() "desborda" valores
+     * fuera de rango en vez de rechazarlos ("2026-13-45T99:99" se convierte
+     * en una fecha de 2027), así que se vuelve a formatear y se compara contra
+     * lo recibido: mismo criterio que ya usa esFechaValida() en los filtros.
+     */
+    private function parsearFechaEntrega(string $fechaEntregaRaw): ?\DateTime
+    {
+        if ($fechaEntregaRaw === '') {
+            return null;
+        }
+
+        $dt = \DateTime::createFromFormat('Y-m-d\TH:i', $fechaEntregaRaw);
+
+        if ($dt === false || $dt->format('Y-m-d\TH:i') !== $fechaEntregaRaw) {
+            return null;
+        }
+
+        return $dt;
+    }
+
+    /**
      * Valida solo la fecha de entrega. Se usa tanto en el alta como en la
      * edición (HU-10): la modificación no vuelve a chequear la anticipación
      * mínima de "Evento", solo que la fecha tenga formato válido.
@@ -631,6 +661,13 @@ final class PedidoController
 
             if ($fila['cantidad'] === '' || !is_numeric($fila['cantidad']) || (float) $fila['cantidad'] <= 0) {
                 return ['productos' => 'La cantidad de cada producto debe ser un número mayor a cero'];
+            }
+
+            if ($producto['unidad_medida'] === 'unidad' && fmod((float) $fila['cantidad'], 1.0) !== 0.0) {
+                return ['productos' => sprintf(
+                    '"%s" se vende por unidad: la cantidad debe ser un número entero',
+                    $producto['nombre']
+                )];
             }
         }
 
@@ -715,9 +752,7 @@ final class PedidoController
     private function camposDelPostEdicion(): array
     {
         $fechaEntregaRaw = trim((string) ($_POST['fecha_entrega'] ?? ''));
-        $fechaEntregaDt  = $fechaEntregaRaw !== ''
-            ? (\DateTime::createFromFormat('Y-m-d\TH:i', $fechaEntregaRaw) ?: null)
-            : null;
+        $fechaEntregaDt  = $this->parsearFechaEntrega($fechaEntregaRaw);
 
         $productos = [];
 

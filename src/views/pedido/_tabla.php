@@ -12,9 +12,10 @@ declare(strict_types=1);
  *     (sin layout: solo este fragmento, que assets/js/app.js inserta en el
  *     DOM reemplazando la tabla actual).
  *
- * El ícono de editar se oculta para quien no tiene permiso de alta/edición
- * (maestro_panadero, repartidor): pueden consultar el listado completo, pero
- * un link a una pantalla que igual les va a rechazar el acceso no aporta nada.
+ * Administrador y cajero ven el ícono de editar. maestro_panadero y
+ * repartidor ven en su lugar el ícono "Ver detalle": abre la misma pantalla
+ * (pedido/{id}/editar), que para esos roles se muestra siempre en solo
+ * lectura y sin el botón de cancelar (HU-10, HU-11).
  *
  * @var array<int, array<string, mixed>> $pedidos
  */
@@ -58,13 +59,24 @@ $puedeEditar = in_array($rolActual, ['administrador', 'cajero'], true);
                             <td><?= e(date('d/m/Y H:i', strtotime((string) $pedido['fecha_entrega']))) ?></td>
                             <td><?= e((string) $pedido['cantidad_productos']) ?></td>
                             <td>
-                                <span class="abm-badge <?= $pedido['estado'] === 'Cancelado' ? 'abm-badge-inactivo' : 'abm-badge-activo' ?>">
+                                <?php
+                                $claseEstadoBadge = match ($pedido['estado']) {
+                                    'Nuevo'          => 'abm-badge-nuevo',
+                                    'Confirmado'     => 'abm-badge-confirmado',
+                                    'En preparación' => 'abm-badge-preparacion',
+                                    'Listo'          => 'abm-badge-listo',
+                                    'Entregado'      => 'abm-badge-entregado',
+                                    'Cancelado'      => 'abm-badge-cancelado',
+                                    default          => 'abm-badge-activo',
+                                };
+                                ?>
+                                <span class="abm-badge <?= e($claseEstadoBadge) ?>">
                                     <?= e($pedido['estado']) ?>
                                 </span>
                             </td>
                             <td class="abm-col-acciones">
+                                <div class="abm-acciones">
                                 <?php if ($puedeEditar): ?>
-                                    <div class="abm-acciones">
                                         <a class="abm-icono" title="Editar"
                                            href="<?= e(base_url('pedido/' . $pedido['id_pedido'] . '/editar')) ?>">
                                             <span class="abm-sr">Editar pedido #<?= e((string) $pedido['id_pedido']) ?></span>
@@ -74,8 +86,18 @@ $puedeEditar = in_array($rolActual, ['administrador', 'cajero'], true);
                                                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
                                             </svg>
                                         </a>
-                                    </div>
+                                <?php else: ?>
+                                        <a class="abm-icono" title="Ver detalle"
+                                           href="<?= e(base_url('pedido/' . $pedido['id_pedido'] . '/editar')) ?>">
+                                            <span class="abm-sr">Ver detalle del pedido #<?= e((string) $pedido['id_pedido']) ?></span>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </a>
                                 <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

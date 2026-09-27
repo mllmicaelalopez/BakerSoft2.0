@@ -48,21 +48,21 @@ final class DashboardController
             'proximasEntregas' => [
                 [
                     'cliente'  => 'Confitería La Esquina',
-                    'contacto' => '11 4567-8901',
+                    'contacto' => '351 456-8901',
                     'producto' => 'Facturas surtidas',
-                    'cantidad' => '12 docenas',
+                    'cantidad' => '144 uds.',
                     'pedidos'  => '3',
                 ],
                 [
                     'cliente'  => 'Café Pellegrini',
-                    'contacto' => '11 2345-6789',
+                    'contacto' => '351 234-6789',
                     'producto' => 'Medialunas',
-                    'cantidad' => '20 docenas',
+                    'cantidad' => '240 uds.',
                     'pedidos'  => '5',
                 ],
                 [
                     'cliente'  => 'Kiosco Don Pedro',
-                    'contacto' => '11 9876-5432',
+                    'contacto' => '351 987-5432',
                     'producto' => 'Alfajores de maicena',
                     'cantidad' => '150 uds.',
                     'pedidos'  => '2',

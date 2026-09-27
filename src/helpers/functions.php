@@ -52,12 +52,23 @@ function base_url(string $path = ''): string
 
 /**
  * URL de un archivo dentro de /assets (que vive fuera de /public).
+ *
+ * Le agrega "?v=<fecha de modificación>" (cache busting): cada vez que el
+ * archivo cambia, la URL cambia y el navegador lo vuelve a descargar solo, en
+ * vez de seguir usando la copia vieja que tenía guardada en caché. Si el
+ * archivo no existe, la URL queda sin versión, igual que antes.
  */
 function asset(string $path = ''): string
 {
-    $root = preg_replace('#/public$#', '', app_base()) ?? '';
+    $root    = preg_replace('#/public$#', '', app_base()) ?? '';
+    $url     = $root . '/assets/' . ltrim($path, '/');
+    $archivo = BASE_PATH . '/assets/' . ltrim($path, '/');
 
-    return $root . '/assets/' . ltrim($path, '/');
+    if (is_file($archivo)) {
+        $url .= '?v=' . filemtime($archivo);
+    }
+
+    return $url;
 }
 
 /**

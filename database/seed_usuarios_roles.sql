@@ -6,8 +6,11 @@
 --     'cajero@bakersoft.local', 'repartidor@bakersoft.local', 'panadero@bakersoft.local'
 --   );
 --
--- El administrador de prueba ya existe: es test@bakersoft.local, sembrado por
--- database/usuario_prueba.sql y pasado a administrador por la migración 005.
+-- El administrador de prueba es test@bakersoft.local, sembrado por
+-- database/usuario_prueba.sql. Se lo pasa a administrador al final de este
+-- script (además de en la migración 005), porque con el orden de instalación
+-- del README usuario_prueba.sql corre DESPUÉS de la 005 y la cuenta quedaba
+-- con el rol por defecto (cajero).
 --
 --   cajero@bakersoft.local      / Cajero123!
 --   repartidor@bakersoft.local  / Repartidor123!
@@ -60,3 +63,6 @@ ON DUPLICATE KEY UPDATE
     `password_hash`  = VALUES(`password_hash`),
     `activo`         = VALUES(`activo`),
     `id_rol`         = VALUES(`id_rol`);
+
+-- Administrador de prueba (ver nota del encabezado).
+UPDATE `usuarios` SET `id_rol` = 1 WHERE `email` = 'test@bakersoft.local';

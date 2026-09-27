@@ -797,8 +797,15 @@ pre.error {
     font-weight: 600;
 }
 
-.abm-badge-activo   { background: var(--app-naranja); color: #fff; }
+.abm-badge-activo   { background: #eef8f1; color: #2f7d4f; }
 .abm-badge-inactivo { background: #ebe6df; color: #7c7168; }
+
+.abm-badge-nuevo        { background: #eaf0f7; color: #3c5c82; }
+.abm-badge-confirmado   { background: var(--app-naranja-suave); color: var(--app-marron-oscuro); }
+.abm-badge-preparacion  { background: var(--app-durazno); color: var(--app-marron); }
+.abm-badge-listo        { background: #eef8f1; color: #2f7d4f; }
+.abm-badge-entregado    { background: var(--app-marron-oscuro); color: #fff; }
+.abm-badge-cancelado    { background: var(--app-alerta-fondo); color: var(--app-alerta); }
 
 .abm-acciones {
     display: flex;
@@ -1079,3 +1086,4 @@ pre.error {
 
     .dash-etiquetas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+ 

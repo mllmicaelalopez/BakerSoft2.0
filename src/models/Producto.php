@@ -24,7 +24,7 @@ final class Producto
     ): array {
         // El JOIN no filtra por tipo_producto.activo: un producto sigue
         // apareciendo aunque su categoría se haya dado de baja.
-        $sql = 'SELECT p.id_producto, p.codigo, p.nombre, p.precio, p.descripcion,
+        $sql = 'SELECT p.id_producto, p.codigo, p.nombre, p.unidad_medida, p.precio, p.descripcion,
                        p.activo, p.fecha_creacion, p.id_tipo_producto,
                        t.nombre AS categoria, t.activo AS categoria_activa
                 FROM producto p
@@ -70,7 +70,7 @@ final class Producto
     public static function buscarPorId(int $id): ?array
     {
         $stmt = Database::getConnection()->prepare(
-            'SELECT p.id_producto, p.codigo, p.id_tipo_producto, p.nombre, p.precio,
+            'SELECT p.id_producto, p.codigo, p.id_tipo_producto, p.nombre, p.unidad_medida, p.precio,
                     p.descripcion, p.activo, p.fecha_creacion,
                     t.nombre AS categoria
              FROM producto p
@@ -86,22 +86,23 @@ final class Producto
     }
 
     /**
-     * @param array{codigo: string, id_tipo_producto: int, nombre: string, precio: string, descripcion: ?string} $datos
+     * @param array{codigo: string, id_tipo_producto: int, nombre: string, unidad_medida: string, precio: string, descripcion: ?string} $datos
      * @throws PDOException si el código o el nombre ya existen.
      */
     public static function crear(array $datos): int
     {
         $stmt = Database::getConnection()->prepare(
-            'INSERT INTO producto (codigo, id_tipo_producto, nombre, precio, descripcion)
-             VALUES (:codigo, :tipo, :nombre, :precio, :descripcion)'
+            'INSERT INTO producto (codigo, id_tipo_producto, nombre, unidad_medida, precio, descripcion)
+             VALUES (:codigo, :tipo, :nombre, :unidad_medida, :precio, :descripcion)'
         );
 
         $stmt->execute([
-            'codigo'      => $datos['codigo'],
-            'tipo'        => $datos['id_tipo_producto'],
-            'nombre'      => $datos['nombre'],
-            'precio'      => $datos['precio'],
-            'descripcion' => $datos['descripcion'] !== '' ? $datos['descripcion'] : null,
+            'codigo'        => $datos['codigo'],
+            'tipo'          => $datos['id_tipo_producto'],
+            'nombre'        => $datos['nombre'],
+            'unidad_medida' => $datos['unidad_medida'],
+            'precio'        => $datos['precio'],
+            'descripcion'   => $datos['descripcion'] !== '' ? $datos['descripcion'] : null,
         ]);
 
         return (int) Database::getConnection()->lastInsertId();
@@ -111,7 +112,7 @@ final class Producto
      * Actualiza todo menos el código, que es la referencia estable del producto
      * y queda deliberadamente afuera del UPDATE.
      *
-     * @param array{id_tipo_producto: int, nombre: string, precio: string, descripcion: ?string} $datos
+     * @param array{id_tipo_producto: int, nombre: string, unidad_medida: string, precio: string, descripcion: ?string} $datos
      */
     public static function actualizar(int $id, array $datos): void
     {
@@ -119,17 +120,19 @@ final class Producto
             'UPDATE producto
              SET id_tipo_producto = :tipo,
                  nombre           = :nombre,
+                 unidad_medida    = :unidad_medida,
                  precio           = :precio,
                  descripcion      = :descripcion
              WHERE id_producto = :id'
         );
 
         $stmt->execute([
-            'tipo'        => $datos['id_tipo_producto'],
-            'nombre'      => $datos['nombre'],
-            'precio'      => $datos['precio'],
-            'descripcion' => $datos['descripcion'] !== '' ? $datos['descripcion'] : null,
-            'id'          => $id,
+            'tipo'          => $datos['id_tipo_producto'],
+            'nombre'        => $datos['nombre'],
+            'unidad_medida' => $datos['unidad_medida'],
+            'precio'        => $datos['precio'],
+            'descripcion'   => $datos['descripcion'] !== '' ? $datos['descripcion'] : null,
+            'id'            => $id,
         ]);
     }
 

@@ -108,6 +108,20 @@ $activo = (bool) ($producto['activo'] ?? true);
                 </div>
 
                 <div class="abm-campo">
+                    <label class="abm-label" for="unidad_medida">Unidad de medida</label>
+                    <select
+                        class="abm-input<?= isset($errores['unidad_medida']) ? ' abm-input-error' : '' ?>"
+                        id="unidad_medida"
+                        name="unidad_medida">
+                        <option value="kg"     <?= (string) $producto['unidad_medida'] === 'kg'     ? 'selected' : '' ?>>Kilogramo (kg)</option>
+                        <option value="unidad" <?= (string) $producto['unidad_medida'] === 'unidad' ? 'selected' : '' ?>>Unidad</option>
+                    </select>
+                    <?php if (isset($errores['unidad_medida'])): ?>
+                        <span class="abm-ayuda abm-ayuda-error"><?= e($errores['unidad_medida']) ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="abm-campo">
                     <label class="abm-label" for="descripcion">Descripción</label>
                     <textarea
                         class="abm-input abm-textarea<?= isset($errores['descripcion']) ? ' abm-input-error' : '' ?>"

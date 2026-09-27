@@ -15,6 +15,10 @@
 
 USE `bakersoft_db`;
 
+-- Los textos con tilde ("En preparación", "Fogón", etc.) se guardan bien
+-- aunque el cliente de MySQL de la PC tenga otra codificación por defecto.
+SET NAMES utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `pedido` (
     `id_pedido`                                INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `id_cliente`                               INT UNSIGNED NOT NULL,
