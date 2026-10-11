@@ -87,12 +87,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnConfirmarFueraPlazo = document.getElementById('btn-confirmar-fuera-plazo');
 
     function anticipacionInsuficiente() {
-        if (!selectTipo || !inputFecha || !inputFecha.value) {
+        if (!inputFecha || !inputFecha.value) {
             return false;
         }
 
-        var opcion = selectTipo.options[selectTipo.selectedIndex];
-        var horas = opcion ? parseInt(opcion.dataset.anticipacion || '0', 10) : 0;
+        // En el alta las horas salen del tipo elegido; en la edición el tipo
+        // es fijo y las horas vienen en el propio campo de fecha.
+        var horas;
+
+        if (selectTipo) {
+            var opcion = selectTipo.options[selectTipo.selectedIndex];
+            horas = opcion ? parseInt(opcion.dataset.anticipacion || '0', 10) : 0;
+        } else {
+            horas = parseInt(inputFecha.dataset.anticipacion || '0', 10);
+        }
 
         if (!horas) {
             return false;
@@ -102,6 +110,25 @@ document.addEventListener('DOMContentLoaded', function () {
         var minimo = new Date(Date.now() + horas * 3600000);
 
         return entrega < minimo;
+    }
+
+    function fechaPasada() {
+        if (!inputFecha || !inputFecha.value) {
+            return false;
+        }
+
+        return new Date(inputFecha.value) < new Date();
+    }
+
+    // En la edición, la fecha y la anticipación solo se revisan si la fecha
+    // cambió respecto de la guardada (data-fecha-original). En el alta no hay
+    // fecha original: siempre cuenta como cambiada.
+    function fechaCambio() {
+        if (!inputFecha || !inputFecha.dataset.fechaOriginal) {
+            return true;
+        }
+
+        return inputFecha.value !== inputFecha.dataset.fechaOriginal;
     }
 
     // Un cambio de tipo o de fecha invalida una confirmación previa: hay que
@@ -166,6 +193,25 @@ document.addEventListener('DOMContentLoaded', function () {
         (contenedor || campo.closest('.abm-campo')).appendChild(msj);
     }
 
+    // Misma regla y mismos textos que PedidoController::validarProductos():
+    // número mayor a cero y, si el producto es por unidad, entero. Devuelve ''
+    // si la cantidad está bien.
+    function mensajeCantidad(selectProducto, cantidadTexto) {
+        var valor = cantidadTexto.replace(',', '.');
+
+        if (!/^\d+(\.\d+)?$/.test(valor) || parseFloat(valor) <= 0) {
+            return 'La cantidad de cada producto debe ser un número mayor a cero';
+        }
+
+        var opcion = selectProducto.options[selectProducto.selectedIndex];
+
+        if (opcion && opcion.dataset.unidad === 'unidad' && parseFloat(valor) % 1 !== 0) {
+            return '"' + opcion.dataset.nombre + '" se vende por unidad: la cantidad debe ser un número entero';
+        }
+
+        return '';
+    }
+
     function validarObligatorios() {
         var hayErrores = false;
         var radioNuevo = document.getElementById('modo-cliente-nuevo');
@@ -200,6 +246,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (producto !== '' && cantidad !== '') {
                     algunaCompleta = true;
+
+                    if (!mensajeProductos) {
+                        mensajeProductos = mensajeCantidad(fila.querySelector('select'), cantidad);
+                    }
                 } else if (producto === '' && cantidad !== '' && !mensajeProductos) {
                     mensajeProductos = 'Elegí un producto válido en cada fila';
                 } else if (producto !== '' && cantidad === '' && !mensajeProductos) {
@@ -236,6 +286,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!aviso || !inputConfirmar) {
+            return;
+        }
+
+        if (!fechaCambio()) {
+            return; // edición con la fecha sin tocar: no hay nada que revisar
+        }
+
+        // Una fecha pasada no es "poca anticipación" (que se puede confirmar
+        // igual): el servidor siempre la rechaza (PedidoController::store(),
+        // 'vencida'), así que acá no se ofrece "Confirmar igual".
+        if (fechaPasada()) {
+            evento.preventDefault();
+            aviso.hidden = true;
+            inputConfirmar.value = '';
+            marcarError(inputFecha, 'La fecha de entrega no puede ser anterior a este momento.');
+            form.querySelector('.abm-ayuda-error').scrollIntoView({ block: 'center' });
             return;
         }
 

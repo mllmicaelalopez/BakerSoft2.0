@@ -19,6 +19,10 @@ declare(strict_types=1);
  * propio (action distinto: .../estado) con el mismo criterio de bloque
  * inline oculto por defecto que ya usa #aviso-anticipacion (HU-09).
  *
+ * La misma vista sirve también para "Ver detalle" (PedidoController::show(),
+ * pedido/{id}/ver): $soloLectura en true con $motivoSoloLectura vacío es la
+ * vista de consulta, sin advertencia, sin "Guardar" y sin "Cancelar pedido".
+ *
  * @var string $modo                    "crear" o "editar"
  * @var array<string, mixed>|null $pedido  Solo en modo "editar".
  * @var array<int, array<string, mixed>> $tiposPedido
@@ -29,9 +33,11 @@ declare(strict_types=1);
  * @var array<string, string> $clienteNuevo
  * @var string $idTipoPedido
  * @var string $fechaEntrega
+ * @var string $fechaEntregaOriginal     Solo en modo "editar": la fecha guardada (Y-m-d\TH:i).
+ * @var int $anticipacionMinimaHoras     Solo en modo "editar": horas de anticipación del tipo de pedido.
  * @var array<int, array{id_producto: string, cantidad: string}> $productos
- * @var bool $anticipacionInsuficiente  Solo aplica en modo "crear".
- * @var bool $confirmarFueraPlazo       Solo aplica en modo "crear".
+ * @var bool $anticipacionInsuficiente  Aplica al alta y a la edición editable (no al solo lectura).
+ * @var bool $confirmarFueraPlazo       Aplica al alta y a la edición editable (no al solo lectura).
  * @var bool $soloLectura               Solo aplica en modo "editar".
  * @var string $motivoSoloLectura
  * @var bool $advertenciaEnPreparacion  Solo aplica en modo "editar".
@@ -58,9 +64,13 @@ $opcionesProducto = static function (string $seleccionado) use ($productosDispon
 
     foreach ($productosDisponibles as $prod) {
         $valor = (string) $prod['id_producto'];
+        // data-unidad y data-nombre los usa assets/js/app.js para validar la
+        // cantidad (entera si es por unidad) con el mismo texto que el servidor.
         $html .= sprintf(
-            '<option value="%s"%s>%s</option>',
+            '<option value="%s" data-unidad="%s" data-nombre="%s"%s>%s</option>',
             e($valor),
+            $prod['unidad_medida'] === 'kg' ? 'kg' : 'unidad',
+            e($prod['nombre']),
             $seleccionado === $valor ? ' selected' : '',
             e($prod['nombre'] . ' (' . ($prod['unidad_medida'] === 'kg' ? 'kg' : 'unidad') . ')')
         );
@@ -73,7 +83,7 @@ $opcionesProducto = static function (string $seleccionado) use ($productosDispon
 
 <div class="abm-form-caja abm-form-ancho">
 
-    <?php if ($esEdicion && $soloLectura): ?>
+    <?php if ($esEdicion && $soloLectura && $motivoSoloLectura !== ''): ?>
         <p class="abm-alerta abm-alerta-error" role="alert"><?= e($motivoSoloLectura) ?></p>
     <?php endif; ?>
 
@@ -225,16 +235,20 @@ $opcionesProducto = static function (string $seleccionado) use ($productosDispon
             <label class="abm-label" for="fecha_entrega">Fecha y hora de entrega<span class="abm-requerido">*</span></label>
             <input class="abm-input<?= isset($errores['fecha_entrega']) ? ' abm-input-error' : '' ?>"
                    type="datetime-local" id="fecha_entrega" name="fecha_entrega"
+                   <?php if ($esEdicion): ?>
+                   data-anticipacion="<?= e((string) $anticipacionMinimaHoras) ?>"
+                   data-fecha-original="<?= e($fechaEntregaOriginal) ?>"
+                   <?php endif; ?>
                    value="<?= e($fechaEntrega) ?>" <?= $deshabilitar ? 'disabled' : '' ?>>
             <?php if (isset($errores['fecha_entrega'])): ?>
                 <span class="abm-ayuda abm-ayuda-error"><?= e($errores['fecha_entrega']) ?></span>
             <?php endif; ?>
 
-            <?php if (!$esEdicion): ?>
+            <?php if (!$deshabilitar): ?>
                 <!--
-                    Aviso de anticipación mínima: solo aplica al alta (HU-09).
-                    La modificación (HU-10) no vuelve a chequear las 48hs de
-                    "Evento" acá a propósito.
+                    Aviso de anticipación mínima: aplica al alta (HU-09) y a la
+                    edición cuando la fecha de entrega cambia (HU-10). En solo
+                    lectura y en "Ver detalle" no se renderiza.
                 -->
                 <div id="aviso-anticipacion" class="abm-alerta abm-alerta-error" role="alert"
                      <?= !$anticipacionInsuficiente ? 'hidden' : '' ?>>
@@ -249,6 +263,13 @@ $opcionesProducto = static function (string $seleccionado) use ($productosDispon
                        value="<?= $confirmarFueraPlazo ? '1' : '' ?>">
             <?php endif; ?>
         </div>
+
+        <?php if ($esEdicion && $pedido['estado'] === 'Cancelado'): ?>
+            <div class="abm-campo">
+                <label class="abm-label" for="motivo_cancelacion_registrado">Motivo de la cancelación</label>
+                <textarea class="abm-input abm-textarea" id="motivo_cancelacion_registrado" rows="2" disabled><?= e(trim((string) ($pedido['motivo_cancelacion'] ?? '')) !== '' ? (string) $pedido['motivo_cancelacion'] : 'Sin motivo registrado') ?></textarea>
+            </div>
+        <?php endif; ?>
 
         <div class="abm-campo">
             <span class="abm-label">Productos<span class="abm-requerido">*</span></span>

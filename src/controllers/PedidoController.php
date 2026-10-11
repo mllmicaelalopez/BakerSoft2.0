@@ -7,10 +7,10 @@ declare(strict_types=1);
  *
  * HU-09 (alta), HU-10 (modificación: productos, cantidades y fecha de
  * entrega; cliente y tipo de pedido quedan fijos), HU-11 (consulta: listado
- * con filtros) y HU-12 (baja lógica / cancelación) ya están. No hay una
- * pantalla de "detalle" separada: showEditForm() cumple ese rol (de solo
- * lectura cuando el pedido no es editable) y ahí mismo vive el botón
- * "Cancelar pedido".
+ * con filtros) y HU-12 (baja lógica / cancelación) ya están. El detalle de
+ * solo lectura es show() (pedido/{id}/ver); showEditForm() (pedido/{id}/editar)
+ * es la pantalla de edición, de solo lectura cuando el pedido no es editable,
+ * y ahí mismo vive el botón "Cancelar pedido".
  *
  * Permisos: index() y showEditForm() (listado y detalle) usan
  * requireRole('pedido-consulta') — los cuatro roles pueden consultar, aunque
@@ -254,6 +254,11 @@ final class PedidoController
         $idUsuario = (int) usuario_actual()['id'];
         $editable  = $this->esEditable((string) $pedido['estado'], $rol);
 
+        // La fecha guardada y las horas de anticipación del tipo van aparte de
+        // 'fechaEntrega' (que tras un error es lo que mandó el usuario): el JS
+        // las usa para saber si la fecha cambió y qué anticipación pedir.
+        $tipoPedido = TipoPedido::buscarPorId((int) $pedido['id_tipo_pedido']);
+
         view('layouts/app-layout', array_merge([
             'slot'                     => 'pedido/form',
             'titulo'                   => sprintf('Pedido #%d', $id),
@@ -268,6 +273,8 @@ final class PedidoController
             'clienteNuevo'             => ['nombre_razon_social' => '', 'tipo_cliente' => '', 'cuit_cuil' => '', 'telefono' => '', 'email' => '', 'direccion' => ''],
             'idTipoPedido'             => (string) $pedido['id_tipo_pedido'],
             'fechaEntrega'             => $this->formatearFechaLocal((string) $pedido['fecha_entrega']),
+            'fechaEntregaOriginal'     => $this->formatearFechaLocal((string) $pedido['fecha_entrega']),
+            'anticipacionMinimaHoras'  => (int) ($tipoPedido['anticipacion_minima_horas'] ?? 0),
             'productos'                => $this->detalleParaFormulario($id),
             'anticipacionInsuficiente' => false,
             'confirmarFueraPlazo'      => false,
@@ -287,6 +294,29 @@ final class PedidoController
             'error'                    => '',
             'errores'                  => [],
         ], $datos));
+    }
+
+    /**
+     * GET /pedido/{id}/ver
+     *
+     * Detalle de solo lectura (HU-10, HU-11): la misma pantalla que
+     * showEditForm(), pero sin advertencias, sin "Guardar" y sin "Cancelar
+     * pedido", para quien solo quiere mirar el pedido. Los cuatro roles
+     * pueden consultar (requireRole('pedido-consulta'), lo hace showEditForm()
+     * al reusarlo, pero se pide acá también para que el permiso se lea de un
+     * vistazo).
+     */
+    public function show(int $id): void
+    {
+        requireAuth();
+        requireRole('pedido-consulta');
+
+        $this->showEditForm($id, [
+            'soloLectura'              => true,
+            'motivoSoloLectura'        => '',
+            'advertenciaEnPreparacion' => false,
+            'puedeCancelar'            => false,
+        ]);
     }
 
     /**
@@ -325,13 +355,35 @@ final class PedidoController
         );
 
         // Mismo criterio que el alta (store()): una fecha de entrega nueva no
-        // puede quedar en el pasado. Solo se revisa si la fecha cambió, para no
-        // trabar la edición de productos de un pedido cuya fecha original ya
-        // pasó (la fecha vieja se deja como está).
-        $fechaCambio = $campos['fechaEntregaRaw'] !== $this->formatearFechaLocal((string) $pedido['fecha_entrega']);
+        // puede quedar en el pasado ni con menos anticipación que la mínima
+        // del tipo de pedido (salvo confirmación explícita). Solo se revisa si
+        // la fecha cambió, para no trabar la edición de productos de un pedido
+        // cuya fecha original ya pasó o ya está dentro del plazo (la fecha
+        // vieja se deja como está).
+        $fechaCambio  = $campos['fechaEntregaRaw'] !== $this->formatearFechaLocal((string) $pedido['fecha_entrega']);
+        $fueraDePlazo = false;
 
-        if (!isset($errores['fecha_entrega']) && $fechaCambio && $campos['fechaEntregaDt'] < new \DateTime()) {
-            $errores['fecha_entrega'] = 'La fecha de entrega no puede ser anterior a este momento.';
+        if (!isset($errores['fecha_entrega']) && $fechaCambio) {
+            $anticipacion = $this->revisarAnticipacion(
+                TipoPedido::buscarPorId((int) $pedido['id_tipo_pedido']),
+                $campos['fechaEntregaDt']
+            );
+
+            if ($anticipacion === 'vencida') {
+                $errores['fecha_entrega'] = 'La fecha de entrega no puede ser anterior a este momento.';
+            } elseif ($anticipacion === 'insuficiente' && $errores === []) {
+                if (!$campos['confirmarFueraPlazo']) {
+                    http_response_code(400);
+                    $this->showEditForm($id, [
+                        'fechaEntrega'             => $campos['fechaEntregaRaw'],
+                        'productos'                => $campos['productos'],
+                        'anticipacionInsuficiente' => true,
+                    ]);
+                    return;
+                }
+
+                $fueraDePlazo = true;
+            }
         }
 
         if ($errores !== []) {
@@ -357,6 +409,7 @@ final class PedidoController
                 'fecha_entrega'               => $campos['fechaEntregaDt']->format('Y-m-d H:i:s'),
                 'usuario_ultima_modificacion' => (int) usuario_actual()['id'],
                 'modificado_en_preparacion'   => $enPreparacion,
+                'confirmado_fuera_plazo'      => $fueraDePlazo,
             ]);
 
             // Se borra todo el detalle viejo y se reinserta el nuevo: más
@@ -375,9 +428,10 @@ final class PedidoController
         }
 
         app_log(sprintf(
-            'PEDIDO EDICION id=%d en_preparacion=%s email=%s',
+            'PEDIDO EDICION id=%d en_preparacion=%s fuera_plazo=%s email=%s',
             $id,
             $enPreparacion ? '1' : '0',
+            $fueraDePlazo ? '1' : '0',
             $this->emailActual()
         ));
 
@@ -604,9 +658,11 @@ final class PedidoController
     }
 
     /**
-     * Valida solo la fecha de entrega. Se usa tanto en el alta como en la
-     * edición (HU-10): la modificación no vuelve a chequear la anticipación
-     * mínima de "Evento", solo que la fecha tenga formato válido.
+     * Valida solo la fecha de entrega (que venga y tenga formato válido). Se
+     * usa tanto en el alta como en la edición (HU-10). La anticipación mínima
+     * de "Evento" no se revisa acá: store() y update() la revisan aparte con
+     * revisarAnticipacion(), porque puede terminar en un aviso y no en un
+     * error (en la edición, solo si la fecha cambió).
      *
      * @return array<string, string>
      */
@@ -744,8 +800,9 @@ final class PedidoController
     }
 
     /**
-     * Junta y normaliza los campos del POST de edición (HU-10): solo fecha de
-     * entrega y productos. Cliente y tipo de pedido son fijos, no se leen acá.
+     * Junta y normaliza los campos del POST de edición (HU-10): fecha de
+     * entrega, productos y la confirmación de anticipación insuficiente.
+     * Cliente y tipo de pedido son fijos, no se leen acá.
      *
      * @return array<string, mixed>
      */
@@ -764,9 +821,10 @@ final class PedidoController
         }
 
         return [
-            'fechaEntregaRaw' => $fechaEntregaRaw,
-            'fechaEntregaDt'  => $fechaEntregaDt,
-            'productos'       => $productos,
+            'fechaEntregaRaw'     => $fechaEntregaRaw,
+            'fechaEntregaDt'      => $fechaEntregaDt,
+            'productos'           => $productos,
+            'confirmarFueraPlazo' => ($_POST['confirmar_fuera_plazo'] ?? '') === '1',
         ];
     }
 

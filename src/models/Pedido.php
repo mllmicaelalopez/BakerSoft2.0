@@ -86,6 +86,7 @@ final class Pedido
         $sql = 'SELECT p.id_pedido, p.id_cliente, p.id_tipo_pedido, p.usuario_registro,
                        p.fecha_creacion, p.fecha_entrega, p.estado,
                        p.confirmado_fuera_de_anticipacion, p.fecha_hora_confirmacion_fuera_plazo,
+                       p.motivo_cancelacion,
                        c.nombre_razon_social AS cliente,
                        tp.nombre AS tipo_pedido
                 FROM pedido p
@@ -146,8 +147,17 @@ final class Pedido
      * true (OR con el valor actual): registra que el pedido fue editado
      * alguna vez estando "En preparación", no solo en la última edición.
      *
+     * `confirmado_fuera_plazo` (true cuando se confirmó una fecha con menos
+     * anticipación que la mínima del tipo de pedido, HU-09/HU-10) marca
+     * `confirmado_fuera_de_anticipacion` y guarda la hora de esa confirmación.
+     * Con false esas dos columnas quedan como están: una edición posterior no
+     * borra la traza de una confirmación anterior (mismo criterio que
+     * `modificado_en_preparacion`). El usuario que confirmó queda en
+     * `usuario_ultima_modificacion`.
+     *
      * @param array{
-     *     fecha_entrega: string, usuario_ultima_modificacion: int, modificado_en_preparacion: bool
+     *     fecha_entrega: string, usuario_ultima_modificacion: int,
+     *     modificado_en_preparacion: bool, confirmado_fuera_plazo: bool
      * } $datos
      */
     public static function actualizar(int $id, array $datos): void
@@ -158,17 +168,22 @@ final class Pedido
                  fecha_ultima_modificacion = NOW(),
                  usuario_ultima_modificacion = :usuario,
                  modificado_en_preparacion = modificado_en_preparacion OR :en_preparacion_1,
-                 fecha_hora_modificacion_en_preparacion = IF(:en_preparacion_2, NOW(), fecha_hora_modificacion_en_preparacion)
+                 fecha_hora_modificacion_en_preparacion = IF(:en_preparacion_2, NOW(), fecha_hora_modificacion_en_preparacion),
+                 confirmado_fuera_de_anticipacion = confirmado_fuera_de_anticipacion OR :fuera_plazo_1,
+                 fecha_hora_confirmacion_fuera_plazo = IF(:fuera_plazo_2, NOW(), fecha_hora_confirmacion_fuera_plazo)
              WHERE id_pedido = :id'
         );
 
         $enPreparacion = $datos['modificado_en_preparacion'] ? 1 : 0;
+        $fueraDePlazo  = $datos['confirmado_fuera_plazo'] ? 1 : 0;
 
         $stmt->execute([
             'fecha_entrega'     => $datos['fecha_entrega'],
             'usuario'           => $datos['usuario_ultima_modificacion'],
             'en_preparacion_1'  => $enPreparacion,
             'en_preparacion_2'  => $enPreparacion,
+            'fuera_plazo_1'     => $fueraDePlazo,
+            'fuera_plazo_2'     => $fueraDePlazo,
             'id'                => $id,
         ]);
     }

@@ -12,10 +12,11 @@ declare(strict_types=1);
  *     (sin layout: solo este fragmento, que assets/js/app.js inserta en el
  *     DOM reemplazando la tabla actual).
  *
- * Administrador y cajero ven el ícono de editar. maestro_panadero y
- * repartidor ven en su lugar el ícono "Ver detalle": abre la misma pantalla
- * (pedido/{id}/editar), que para esos roles se muestra siempre en solo
- * lectura y sin el botón de cancelar (HU-10, HU-11).
+ * Los cuatro roles ven el ícono "Ver detalle" (pedido/{id}/ver): el pedido en
+ * solo lectura, sin advertencias ni botones de acción (HU-10, HU-11).
+ * Administrador y cajero ven además, a continuación, el ícono "Editar"
+ * (pedido/{id}/editar), que es la pantalla con las reglas de edición y de
+ * cancelación (HU-10, HU-12).
  *
  * @var array<int, array<string, mixed>> $pedidos
  */
@@ -76,7 +77,18 @@ $puedeEditar = in_array($rolActual, ['administrador', 'cajero'], true);
                             </td>
                             <td class="abm-col-acciones">
                                 <div class="abm-acciones">
-                                <?php if ($puedeEditar): ?>
+
+                                    <a class="abm-icono" title="Ver detalle"
+                                       href="<?= e(base_url('pedido/' . $pedido['id_pedido'] . '/ver')) ?>">
+                                        <span class="abm-sr">Ver detalle del pedido #<?= e((string) $pedido['id_pedido']) ?></span>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </a>
+
+                                    <?php if ($puedeEditar): ?>
                                         <a class="abm-icono" title="Editar"
                                            href="<?= e(base_url('pedido/' . $pedido['id_pedido'] . '/editar')) ?>">
                                             <span class="abm-sr">Editar pedido #<?= e((string) $pedido['id_pedido']) ?></span>
@@ -86,17 +98,8 @@ $puedeEditar = in_array($rolActual, ['administrador', 'cajero'], true);
                                                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
                                             </svg>
                                         </a>
-                                <?php else: ?>
-                                        <a class="abm-icono" title="Ver detalle"
-                                           href="<?= e(base_url('pedido/' . $pedido['id_pedido'] . '/editar')) ?>">
-                                            <span class="abm-sr">Ver detalle del pedido #<?= e((string) $pedido['id_pedido']) ?></span>
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
-                                                <circle cx="12" cy="12" r="3"></circle>
-                                            </svg>
-                                        </a>
-                                <?php endif; ?>
+                                    <?php endif; ?>
+
                                 </div>
                             </td>
                         </tr>
