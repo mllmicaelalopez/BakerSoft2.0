@@ -5,9 +5,12 @@ declare(strict_types=1);
 /**
  * BakerSoft - Dashboard (HU-00).
  *
- * Los datos de ventas, stock y entregas todavía no existen en la base, así
- * que por ahora se arman acá como mock. Cuando estén los módulos reales, cada
- * bloque pasa a leer de su modelo y la vista no debería cambiar.
+ * El bloque de próximas entregas ya es real (HU-13): usa la misma consulta
+ * que el listado de EntregaController, con sus filtros por defecto y las 5
+ * primeras filas. Los datos de ventas, más vendidos y stock todavía no existen
+ * en la base, así que por ahora se arman acá como mock. Cuando estén los
+ * módulos reales, cada bloque pasa a leer de su modelo y la vista no debería
+ * cambiar.
  */
 final class DashboardController
 {
@@ -45,29 +48,10 @@ final class DashboardController
                 'pedidos_pendientes' => 5,
             ],
 
-            'proximasEntregas' => [
-                [
-                    'cliente'  => 'Confitería La Esquina',
-                    'contacto' => '351 456-8901',
-                    'producto' => 'Facturas surtidas',
-                    'cantidad' => '144 uds.',
-                    'pedidos'  => '3',
-                ],
-                [
-                    'cliente'  => 'Café Pellegrini',
-                    'contacto' => '351 234-6789',
-                    'producto' => 'Medialunas',
-                    'cantidad' => '240 uds.',
-                    'pedidos'  => '5',
-                ],
-                [
-                    'cliente'  => 'Kiosco Don Pedro',
-                    'contacto' => '351 987-5432',
-                    'producto' => 'Alfajores de maicena',
-                    'cantidad' => '150 uds.',
-                    'pedidos'  => '2',
-                ],
-            ],
+            // --- dato real (HU-13): las 5 primeras próximas entregas, con la
+            //     misma consulta y los mismos filtros por defecto que el
+            //     listado de EntregaController ---
+            'proximasEntregas' => Pedido::listarProximasEntregas(EntregaController::filtrosPorDefecto(), 5),
         ]);
     }
 }

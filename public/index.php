@@ -115,6 +115,14 @@ switch ($route) {
         (new DashboardController())->index();
         break;
 
+    case 'entregas':
+        (new EntregaController())->index();
+        break;
+
+    case 'entregas/exportar':
+        (new EntregaController())->exportar();
+        break;
+
     // Demo visual del layout de autenticación (sin lógica).
     // Se puede borrar junto con src/views/auth/_preview.php cuando existan
     // las vistas reales de login / registro / recuperación.

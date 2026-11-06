@@ -201,6 +201,147 @@ final class Pedido
         $stmt->execute(['motivo' => $motivo, 'id' => $id]);
     }
 
+    /**
+     * Próximas entregas (HU-13): pedidos "Confirmado", "En preparación" o
+     * "Listo" a entregar en el rango de fechas, más los atrasados, ordenados
+     * por fecha y hora de entrega (y por id ante un empate).
+     *
+     * Todo se resuelve en la consulta: el WHERE (compartido con
+     * contarProximasEntregas(), ver condicionesProximasEntregas()), el orden,
+     * la paginación, el resumen de productos (GROUP_CONCAT) y la urgencia
+     * (CASE), así la pantalla, el CSV y el Inicio muestran exactamente lo
+     * mismo. Mismo criterio que listar(): nunca se trae todo para filtrar
+     * después en PHP.
+     *
+     * Sin $limite devuelve todas las filas (lo usa la exportación CSV).
+     *
+     * Columnas: id_pedido, fecha_entrega, estado, tipo_pedido, cliente,
+     * telefono, direccion (los dos últimos pueden ser NULL), productos
+     * ("Nombre: cantidad unidad", separados por ", ") y urgencia
+     * ("Atrasado", "Hoy" o "Próximos días").
+     *
+     * @param array{
+     *     fecha_desde: string, fecha_hasta: string, estado?: string,
+     *     id_tipo_pedido?: int, cliente_nombre?: string
+     * } $filtros
+     * @return array<int, array<string, mixed>>
+     */
+    public static function listarProximasEntregas(array $filtros, ?int $limite = null, int $desplazamiento = 0): array
+    {
+        [$where, $params] = self::condicionesProximasEntregas($filtros);
+
+        // La cantidad sale sin ceros de más y con coma decimal ("24", "1,5");
+        // la unidad es "kg" o "uds." (mismo texto que usaba el Inicio).
+        $sql = "SELECT p.id_pedido, p.fecha_entrega, p.estado,
+                       tp.nombre AS tipo_pedido,
+                       c.nombre_razon_social AS cliente, c.telefono, c.direccion,
+                       GROUP_CONCAT(
+                           CONCAT(
+                               pr.nombre, ': ',
+                               REPLACE(TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM CAST(d.cantidad AS CHAR))), '.', ','),
+                               ' ', IF(pr.unidad_medida = 'kg', 'kg', 'uds.')
+                           )
+                           ORDER BY pr.nombre SEPARATOR ', '
+                       ) AS productos,
+                       CASE
+                           WHEN p.fecha_entrega < NOW() THEN 'Atrasado'
+                           WHEN DATE(p.fecha_entrega) = CURDATE() THEN 'Hoy'
+                           ELSE 'Próximos días'
+                       END AS urgencia
+                FROM pedido p
+                INNER JOIN cliente c ON c.id_cliente = p.id_cliente
+                INNER JOIN tipo_pedido tp ON tp.id_tipo_pedido = p.id_tipo_pedido
+                LEFT JOIN detalle_pedido d ON d.id_pedido = p.id_pedido
+                LEFT JOIN producto pr ON pr.id_producto = d.id_producto
+                WHERE {$where}
+                GROUP BY p.id_pedido
+                ORDER BY p.fecha_entrega ASC, p.id_pedido ASC";
+
+        if ($limite !== null) {
+            // Enteros ya casteados: no hay nada del usuario en estos dos valores.
+            $sql .= sprintf(' LIMIT %d OFFSET %d', $limite, $desplazamiento);
+        }
+
+        $stmt = Database::getConnection()->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Cantidad total de próximas entregas que cumplen los filtros (HU-13),
+     * sin paginar: el mismo WHERE que listarProximasEntregas().
+     *
+     * @param array{
+     *     fecha_desde: string, fecha_hasta: string, estado?: string,
+     *     id_tipo_pedido?: int, cliente_nombre?: string
+     * } $filtros
+     */
+    public static function contarProximasEntregas(array $filtros): int
+    {
+        [$where, $params] = self::condicionesProximasEntregas($filtros);
+
+        $sql = "SELECT COUNT(DISTINCT p.id_pedido)
+                FROM pedido p
+                INNER JOIN cliente c ON c.id_cliente = p.id_cliente
+                WHERE {$where}";
+
+        $stmt = Database::getConnection()->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * WHERE y parámetros de las próximas entregas (HU-13), en un solo lugar
+     * para que el listado, el conteo, el CSV y el Inicio no puedan quedar
+     * desalineados.
+     *
+     * Regla 2 de la documentación: los atrasados (fecha de entrega ya pasada)
+     * entran siempre, aunque queden fuera del rango de fechas. Esa excepción
+     * es solo del rango: el OR abarca únicamente la condición de fechas, y
+     * los filtros opcionales (estado, tipo, cliente) van con AND por fuera
+     * del paréntesis, así que se aplican igual a los atrasados.
+     *
+     * El rango se compara contra la columna sin envolverla en DATE() (desde
+     * las 00:00 del día "desde" hasta antes de las 00:00 del día siguiente a
+     * "hasta", que es lo mismo que DATE(fecha_entrega) BETWEEN desde AND
+     * hasta) para que la consulta pueda usar idx_pedido_fecha_entrega
+     * (migración 011).
+     *
+     * @param array<string, mixed> $filtros
+     * @return array{0: string, 1: array<string, int|string>}
+     */
+    private static function condicionesProximasEntregas(array $filtros): array
+    {
+        $where = "p.estado IN ('Confirmado', 'En preparación', 'Listo')
+                  AND (p.fecha_entrega < NOW()
+                       OR (p.fecha_entrega >= :desde
+                           AND p.fecha_entrega < DATE_ADD(:hasta, INTERVAL 1 DAY)))";
+
+        $params = [
+            'desde' => $filtros['fecha_desde'],
+            'hasta' => $filtros['fecha_hasta'],
+        ];
+
+        if (isset($filtros['estado'])) {
+            $where .= ' AND p.estado = :estado';
+            $params['estado'] = $filtros['estado'];
+        }
+
+        if (isset($filtros['id_tipo_pedido'])) {
+            $where .= ' AND p.id_tipo_pedido = :tipo';
+            $params['tipo'] = $filtros['id_tipo_pedido'];
+        }
+
+        if (isset($filtros['cliente_nombre'])) {
+            $where .= ' AND c.nombre_razon_social LIKE :cliente';
+            $params['cliente'] = '%' . self::escaparLike($filtros['cliente_nombre']) . '%';
+        }
+
+        return [$where, $params];
+    }
+
     private static function escaparLike(string $texto): string
     {
         return str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $texto);

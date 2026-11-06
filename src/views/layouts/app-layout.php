@@ -53,6 +53,7 @@ $menu = [
         ],
     ],
     'pedido'   => ['texto' => 'Pedidos',  'ruta' => 'pedido', 'capacidad' => 'pedido-consulta'],
+    'entregas' => ['texto' => 'Próximas entregas', 'ruta' => 'entregas', 'capacidad' => 'pedido-consulta'],
     'clientes' => ['texto' => 'Clientes', 'ruta' => 'clientes'],
     'finanzas' => ['texto' => 'Finanzas', 'ruta' => 'finanzas'],
     'usuario'  => ['texto' => 'Usuarios', 'ruta' => 'usuario', 'capacidad' => 'usuario'],

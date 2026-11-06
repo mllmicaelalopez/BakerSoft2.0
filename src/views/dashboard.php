@@ -5,13 +5,15 @@ declare(strict_types=1);
 /**
  * BakerSoft - Dashboard (HU-00). Slot del app-layout.
  *
- * Los datos son mock: vienen armados desde DashboardController. Las ventas,
- * el stock y las entregas reales son de sprints posteriores.
+ * Las próximas entregas son datos reales (HU-13): vienen de
+ * Pedido::listarProximasEntregas(), la misma consulta del listado de entregas.
+ * Ventas, más vendidos y stock siguen siendo mock, armados desde
+ * DashboardController: los reales son de sprints posteriores.
  *
  * @var array{etiquetas: string[], valores: int[]}       $ventas
  * @var array<int, array{nombre: string, cantidad: string}> $masVendidos
  * @var array{alerta: string, bajo_stock: int, categorias: int, pedidos_pendientes: int} $stock
- * @var array<int, array<string, string>>                $proximasEntregas
+ * @var array<int, array<string, mixed>>                 $proximasEntregas
  */
 
 ?>
@@ -83,33 +85,54 @@ declare(strict_types=1);
             <div>
                 <h2 class="dash-bloque-titulo">Próximas entregas...</h2>
             </div>
-            <a class="dash-bloque-link" href="<?= e(base_url('pedido')) ?>">Ver más...</a>
+            <a class="dash-bloque-link" href="<?= e(base_url('entregas')) ?>">Ver más...</a>
         </div>
 
-        <div class="dash-tabla-scroll">
-            <table class="dash-tabla">
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Contacto</th>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Pedidos</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($proximasEntregas as $entrega): ?>
+        <?php if ($proximasEntregas === []): ?>
+
+            <p class="abm-vacio">No hay entregas programadas para los próximos 7 días.</p>
+
+        <?php else: ?>
+
+            <div class="dash-tabla-scroll">
+                <table class="dash-tabla">
+                    <thead>
                         <tr>
-                            <td><?= e($entrega['cliente']) ?></td>
-                            <td><?= e($entrega['contacto']) ?></td>
-                            <td><?= e($entrega['producto']) ?></td>
-                            <td><?= e($entrega['cantidad']) ?></td>
-                            <td><?= e($entrega['pedidos']) ?></td>
+                            <th>Entrega</th>
+                            <th>Cliente</th>
+                            <th>Contacto</th>
+                            <th>Productos</th>
+                            <th>Estado</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($proximasEntregas as $entrega): ?>
+                            <tr>
+                                <td><?= e(date('d/m H:i', strtotime((string) $entrega['fecha_entrega']))) ?></td>
+                                <td><?= e($entrega['cliente']) ?></td>
+                                <td><?= e(($entrega['telefono'] ?? '') !== '' ? $entrega['telefono'] : '—') ?></td>
+                                <td><?= e(($entrega['productos'] ?? '') !== '' ? $entrega['productos'] : '—') ?></td>
+                                <td>
+                                    <?php
+                                    $claseEstadoBadge = match ($entrega['estado']) {
+                                        'Nuevo'          => 'abm-badge-nuevo',
+                                        'Confirmado'     => 'abm-badge-confirmado',
+                                        'En preparación' => 'abm-badge-preparacion',
+                                        'Listo'          => 'abm-badge-listo',
+                                        'Entregado'      => 'abm-badge-entregado',
+                                        'Cancelado'      => 'abm-badge-cancelado',
+                                        default          => 'abm-badge-activo',
+                                    };
+                                    ?>
+                                    <span class="abm-badge <?= e($claseEstadoBadge) ?>"><?= e($entrega['estado']) ?></span>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+        <?php endif; ?>
     </section>
 
 </div>

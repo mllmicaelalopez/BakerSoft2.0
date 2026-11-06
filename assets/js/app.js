@@ -395,3 +395,34 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+/* -----------------------------------------------------------------------
+   HU-13: filtros de Próximas entregas. Es un GET normal con recarga completa
+   (no usa fetch): este bloque solo avisa, antes de enviar, que "desde" no
+   puede ser posterior a "hasta". El servidor valida lo mismo igual (400), así
+   que esto no lo reemplaza.
+   ----------------------------------------------------------------------- */
+
+document.addEventListener('DOMContentLoaded', function () {
+    var formFiltros = document.getElementById('form-filtros-entregas');
+
+    if (!formFiltros) {
+        return;
+    }
+
+    var errorFiltros = document.getElementById('error-filtros-entregas');
+
+    formFiltros.addEventListener('submit', function (evento) {
+        var desde = formFiltros.elements['fecha_desde'].value;
+        var hasta = formFiltros.elements['fecha_hasta'].value;
+
+        if (desde !== '' && hasta !== '' && desde > hasta) {
+            evento.preventDefault();
+            errorFiltros.textContent = 'La fecha desde no puede ser posterior a la fecha hasta';
+            errorFiltros.hidden = false;
+            return;
+        }
+
+        errorFiltros.hidden = true;
+    });
+});

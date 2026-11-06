@@ -68,6 +68,7 @@ mysql -u root -p < database/migrations/007_cliente.sql
 mysql -u root -p < database/migrations/008_pedido.sql
 mysql -u root -p < database/migrations/009_detalle_pedido.sql
 mysql -u root -p < database/migrations/010_producto_unidad_medida.sql
+mysql -u root -p < database/migrations/011_pedido_idx_fecha_entrega.sql
 ```
 
 Todas son idempotentes (se pueden correr más de una vez sin romper nada). Para tener

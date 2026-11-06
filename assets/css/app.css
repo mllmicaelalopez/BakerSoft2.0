@@ -602,10 +602,10 @@ pre.error {
 
 .dash-tabla tr:last-child td { border-bottom: none; }
 
-/* Contacto y Cantidad quedan feos partidos en dos líneas; el resto sí puede
-   envolver. Si no entra, el contenedor scrollea. */
-.dash-tabla td:nth-child(2),
-.dash-tabla td:nth-child(4) { white-space: nowrap; }
+/* Entrega y Contacto quedan feos partidos en dos líneas; el resto (Cliente,
+   Productos) sí puede envolver. Si no entra, el contenedor scrollea. */
+.dash-tabla td:nth-child(1),
+.dash-tabla td:nth-child(3) { white-space: nowrap; }
 
 .dash-tabla td:last-child,
 .dash-tabla th:last-child { padding-right: 0; }
@@ -1055,6 +1055,52 @@ pre.error {
 
 @media (max-width: 700px) {
     .abm-form-cols { grid-template-columns: 1fr; gap: 1.25rem; }
+}
+
+/* Próximas entregas (HU-13): urgencia, total y paginación */
+.abm-cab .abm-btn-secundario { margin-left: auto; }
+
+.abm-urgencia {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.abm-urgencia::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.abm-urgencia-atrasado { color: var(--app-alerta); }
+.abm-urgencia-hoy      { color: #b7791f; }
+.abm-urgencia-proximo  { color: #2f7d4f; }
+
+.abm-total {
+    margin: 0 0 0.6rem;
+    font-size: 0.82rem;
+    color: var(--app-marron-suave);
+}
+
+.abm-paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--app-marron);
+}
+
+.abm-paginacion-off {
+    color: var(--app-marron-suave);
+    opacity: 0.55;
+    cursor: default;
 }
 
 /* --------------------------------------------------------------------------
