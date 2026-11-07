@@ -346,4 +346,114 @@ final class Pedido
     {
         return str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $texto);
     }
+
+    /**
+     * Ranking de productos vendidos en un período (HU-14): una fila por
+     * producto que aparece en al menos un pedido "Entregado" cuya fecha de
+     * entrega cae en el período, ordenado por cantidad de pedidos (de mayor a
+     * menor) y, ante un empate, alfabéticamente por nombre.
+     *
+     * Se ordena por pedidos y no por cantidad porque kg y unidades no se
+     * pueden sumar entre sí; la cantidad total vendida va aparte, en la unidad
+     * propia de cada producto. Todo (filtro, agrupamiento, conteos y totales)
+     * se resuelve en la consulta, nunca sumando en PHP; el WHERE es el mismo
+     * que usa contarEntregadosPeriodo() (ver condicionesMasVendidos()).
+     *
+     * Sin $limite devuelve todas las filas (lo usan el informe y el PDF).
+     *
+     * Columnas: id_producto, producto (nombre), categoria (nombre del tipo de
+     * producto), unidad_medida ("kg" o "unidad"), pedidos (cantidad de pedidos
+     * entregados en los que aparece) y total (SUM de cantidad, en su unidad).
+     *
+     * @param string $desde "Y-m-d" (inclusive)
+     * @param string $hasta "Y-m-d" (inclusive: se cuenta todo ese día)
+     * @return array<int, array<string, mixed>>
+     */
+    public static function rankingMasVendidos(string $desde, string $hasta, ?int $idTipoProducto = null, ?int $limite = null): array
+    {
+        [$where, $params] = self::condicionesMasVendidos($desde, $hasta, $idTipoProducto);
+
+        $sql = "SELECT pr.id_producto, pr.nombre AS producto, tp.nombre AS categoria, pr.unidad_medida,
+                       COUNT(DISTINCT p.id_pedido) AS pedidos,
+                       SUM(d.cantidad) AS total
+                FROM pedido p
+                INNER JOIN detalle_pedido d ON d.id_pedido = p.id_pedido
+                INNER JOIN producto pr ON pr.id_producto = d.id_producto
+                INNER JOIN tipo_producto tp ON tp.id_tipo_producto = pr.id_tipo_producto
+                WHERE {$where}
+                GROUP BY pr.id_producto, pr.nombre, tp.nombre, pr.unidad_medida
+                ORDER BY pedidos DESC, producto ASC";
+
+        if ($limite !== null) {
+            // Entero ya casteado: no hay nada del usuario en este valor.
+            $sql .= sprintf(' LIMIT %d', $limite);
+        }
+
+        $stmt = Database::getConnection()->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Cantidad de pedidos "Entregado" con fecha de entrega en el período
+     * (HU-14): el valor del indicador "Pedidos entregados" y el denominador
+     * del "% de pedidos" de cada producto.
+     *
+     * Sin categoría cuenta todos los pedidos entregados del período; con
+     * categoría, solo los que tienen al menos un producto de esa categoría
+     * (por eso ahí se une con detalle y producto).
+     */
+    public static function contarEntregadosPeriodo(string $desde, string $hasta, ?int $idTipoProducto = null): int
+    {
+        [$where, $params] = self::condicionesMasVendidos($desde, $hasta, $idTipoProducto);
+
+        $uniones = $idTipoProducto === null
+            ? ''
+            : 'INNER JOIN detalle_pedido d ON d.id_pedido = p.id_pedido
+               INNER JOIN producto pr ON pr.id_producto = d.id_producto';
+
+        $stmt = Database::getConnection()->prepare(
+            "SELECT COUNT(DISTINCT p.id_pedido) FROM pedido p {$uniones} WHERE {$where}"
+        );
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Condición común (estado, fechas y categoría) y parámetros del informe de
+     * más vendidos (HU-14), en un solo lugar para que el ranking, el conteo,
+     * el PDF y el Inicio no puedan quedar desalineados.
+     *
+     * Regla 1 de la documentación: como todavía no hay módulo de Ventas, un
+     * producto se considera vendido cuando forma parte de un pedido
+     * "Entregado"; el período se toma por fecha_entrega. Ningún otro estado
+     * cuenta.
+     *
+     * Las fechas se comparan contra la columna sin envolverla en DATE() (desde
+     * las 00:00 del día "desde" hasta antes de las 00:00 del día siguiente a
+     * "hasta"), igual que condicionesProximasEntregas(), para poder usar
+     * idx_pedido_fecha_entrega (migración 011).
+     *
+     * El filtro de categoría usa el alias "pr" (producto): quien lo pida tiene
+     * que unir detalle_pedido y producto.
+     *
+     * @return array{0: string, 1: array<string, int|string>}
+     */
+    private static function condicionesMasVendidos(string $desde, string $hasta, ?int $idTipoProducto): array
+    {
+        $where = "p.estado = 'Entregado'
+                  AND p.fecha_entrega >= :desde
+                  AND p.fecha_entrega < DATE_ADD(:hasta, INTERVAL 1 DAY)";
+
+        $params = ['desde' => $desde, 'hasta' => $hasta];
+
+        if ($idTipoProducto !== null) {
+            $where .= ' AND pr.id_tipo_producto = :categoria';
+            $params['categoria'] = $idTipoProducto;
+        }
+
+        return [$where, $params];
+    }
 }

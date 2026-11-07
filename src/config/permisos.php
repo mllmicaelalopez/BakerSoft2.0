@@ -29,5 +29,11 @@ const CAPACIDADES = [
     //   pedido puntual, y la resuelve PedidoController::puedeCancelar().
     'pedido'          => ['administrador', 'cajero'],
     'pedido-consulta' => ['administrador', 'cajero', 'repartidor', 'maestro_panadero'],
+    // Informes (Sprint 5): el de productos más vendidos (HU-14) es información
+    // de gestión (qué producir y qué comprar), no de operación del día a día:
+    // solo administrador y maestro panadero. Cajero y repartidor no ven la
+    // opción en el menú ni el bloque del Inicio, y el servidor responde 403 a
+    // la pantalla y al PDF. Lo usa también el menú lateral (app-layout.php).
+    'informe-mas-vendidos' => ['administrador', 'maestro_panadero'],
     // A futuro: 'reparto' => ['administrador', 'repartidor'], etc.
 ];

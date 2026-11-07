@@ -123,6 +123,14 @@ switch ($route) {
         (new EntregaController())->exportar();
         break;
 
+    case 'informes/mas-vendidos':
+        (new InformeController())->masVendidos();
+        break;
+
+    case 'informes/mas-vendidos/pdf':
+        (new InformeController())->masVendidosPdf();
+        break;
+
     // Demo visual del layout de autenticación (sin lógica).
     // Se puede borrar junto con src/views/auth/_preview.php cuando existan
     // las vistas reales de login / registro / recuperación.

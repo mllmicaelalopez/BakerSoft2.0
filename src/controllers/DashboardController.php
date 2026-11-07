@@ -5,12 +5,15 @@ declare(strict_types=1);
 /**
  * BakerSoft - Dashboard (HU-00).
  *
- * El bloque de próximas entregas ya es real (HU-13): usa la misma consulta
- * que el listado de EntregaController, con sus filtros por defecto y las 5
- * primeras filas. Los datos de ventas, más vendidos y stock todavía no existen
- * en la base, así que por ahora se arman acá como mock. Cuando estén los
- * módulos reales, cada bloque pasa a leer de su modelo y la vista no debería
- * cambiar.
+ * Dos bloques ya son reales: el de próximas entregas (HU-13) usa la misma
+ * consulta que el listado de EntregaController, con sus filtros por defecto y
+ * las 5 primeras filas; el de más vendidos (HU-14) usa la consulta del informe
+ * (Pedido::rankingMasVendidos()) con "Últimos 7 días" y las 4 primeras filas, y
+ * solo se consulta y se muestra a los roles con permiso sobre el informe
+ * (cajero y repartidor reciben null y la vista no lo dibuja). Los datos de
+ * ventas y stock todavía no existen en la base, así que por ahora se arman acá
+ * como mock. Cuando estén los módulos reales, cada bloque pasa a leer de su
+ * modelo y la vista no debería cambiar.
  */
 final class DashboardController
 {
@@ -21,6 +24,23 @@ final class DashboardController
     {
         requireAuth();
         requireRole('dashboard');
+
+        // Más vendidos (HU-14): solo para los roles con permiso sobre el
+        // informe; para el resto no se consulta la base y el bloque no se
+        // muestra. Mismo rango que el período "Últimos 7 días" del informe.
+        $masVendidos = null;
+
+        if (in_array(usuario_actual()['rol'] ?? '', CAPACIDADES['informe-mas-vendidos'], true)) {
+            $rango = InformeController::rangoUltimos7();
+
+            $masVendidos = array_map(
+                static fn (array $fila): array => [
+                    'nombre'   => (string) $fila['producto'],
+                    'cantidad' => formatear_cantidad((string) $fila['total'], (string) $fila['unidad_medida']),
+                ],
+                Pedido::rankingMasVendidos($rango['desde'], $rango['hasta'], null, 4)
+            );
+        }
 
         view('layouts/app-layout', [
             'slot'       => 'dashboard',
@@ -34,13 +54,6 @@ final class DashboardController
                 'valores'   => [48, 15, 9, 62],
             ],
 
-            'masVendidos' => [
-                ['nombre' => 'Alfajores de maicena', 'cantidad' => '220 uds.'],
-                ['nombre' => 'Facturas surtidas',    'cantidad' => '185 uds.'],
-                ['nombre' => 'Pan francés',          'cantidad' => '140 kg'],
-                ['nombre' => 'Tortas de cumpleaños', 'cantidad' => '32 uds.'],
-            ],
-
             'stock' => [
                 'alerta'             => 'Alerta: Bajo stock',
                 'bajo_stock'         => 7,
@@ -52,6 +65,9 @@ final class DashboardController
             //     misma consulta y los mismos filtros por defecto que el
             //     listado de EntregaController ---
             'proximasEntregas' => Pedido::listarProximasEntregas(EntregaController::filtrosPorDefecto(), 5),
+
+            // --- dato real (HU-14): ver arriba; null si el rol no tiene permiso ---
+            'masVendidos' => $masVendidos,
         ]);
     }
 }

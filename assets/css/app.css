@@ -425,6 +425,11 @@ pre.error {
     gap: 1.25rem;
 }
 
+/* Con 3 bloques (cajero y repartidor no ven "Más vendidos", HU-14) el último
+   ocupa toda la fila en vez de dejar un hueco al lado. Con 4 bloques el
+   último es par y esta regla no aplica. */
+.dash-grid > .dash-bloque:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
 .dash-bloque {
     display: flex;
     flex-direction: column;
@@ -1101,6 +1106,212 @@ pre.error {
     color: var(--app-marron-suave);
     opacity: 0.55;
     cursor: default;
+}
+
+/* --------------------------------------------------------------------------
+   Informe de más vendidos (HU-14)
+   -------------------------------------------------------------------------- */
+
+.inf-comparar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--app-marron);
+    cursor: pointer;
+}
+
+.inf-periodo {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    color: var(--app-marron-suave);
+}
+
+.inf-periodo p { margin: 0; }
+
+/* Indicadores */
+.inf-indicadores {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.inf-indicador {
+    min-width: 0;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--app-borde);
+    border-radius: 0.85rem;
+    background: var(--app-superficie);
+}
+
+.inf-indicador p { margin: 0; }
+
+.inf-indicador-titulo {
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--app-marron-suave);
+}
+
+.inf-indicador-valor {
+    margin-top: 0.35rem;
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--app-marron-oscuro);
+}
+
+/* El producto más vendido es un nombre, no un número: más chico y que pueda partirse. */
+.inf-indicador-texto {
+    font-size: 1.15rem;
+    overflow-wrap: anywhere;
+}
+
+.inf-indicador-detalle {
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--app-marron-suave);
+}
+
+/* Ícono "?" que explica cómo se calcula el indicador */
+.inf-ayuda {
+    display: inline-grid;
+    place-items: center;
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-left: 0.3rem;
+    border: 1px solid var(--app-borde);
+    border-radius: 50%;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--app-marron);
+    cursor: help;
+}
+
+.inf-ayuda:hover,
+.inf-ayuda:focus {
+    outline: none;
+    border-color: var(--app-naranja);
+    color: var(--app-naranja);
+}
+
+/* Gráfico de barras horizontales (HTML y CSS, sin librerías) */
+.inf-grafico-caja {
+    margin-bottom: 1.25rem;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--app-borde);
+    border-radius: 0.85rem;
+    background: var(--app-superficie);
+}
+
+.inf-titulo {
+    margin: 0 0 0.8rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--app-marron-oscuro);
+}
+
+.inf-grafico {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.inf-barra-fila {
+    display: grid;
+    grid-template-columns: minmax(6rem, 14rem) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.inf-barra-nombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+    color: var(--app-texto);
+}
+
+.inf-barras {
+    display: grid;
+    gap: 0.2rem;
+}
+
+/* El padding reserva lugar para el número, así una barra al 100 % no lo empuja. */
+.inf-barra {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-right: 3rem;
+}
+
+.inf-barra-actual,
+.inf-barra-anterior {
+    flex: none;
+    height: 0.85rem;
+    min-width: 2px;
+    border-radius: 0 3px 3px 0;
+}
+
+.inf-barra-actual   { background: var(--app-naranja); }
+.inf-barra-anterior { background: #f0c79a; }
+
+.inf-barra-valor {
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--app-marron);
+}
+
+.inf-leyenda {
+    display: flex;
+    gap: 1.1rem;
+    margin: 0 0 0.8rem;
+    padding: 0;
+    list-style: none;
+    font-size: 0.78rem;
+    color: var(--app-marron);
+}
+
+.inf-leyenda li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.inf-leyenda-punto {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 2px;
+}
+
+/* Variación contra el período anterior (la flecha nunca va sola: hay texto accesible) */
+.inf-var { font-weight: 600; white-space: nowrap; }
+.inf-var-sube  { color: #2f7d4f; }
+.inf-var-baja  { color: var(--app-alerta); }
+.inf-var-igual { color: #7c7168; }
+
+.inf-nuevo {
+    display: inline-block;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: var(--app-naranja-suave);
+    color: var(--app-marron-oscuro);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+@media (max-width: 780px) {
+    .inf-indicadores { grid-template-columns: 1fr; }
+    .inf-barra-fila { grid-template-columns: 1fr; gap: 0.2rem; }
 }
 
 /* --------------------------------------------------------------------------

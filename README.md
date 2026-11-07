@@ -33,7 +33,8 @@ Funciona:
 - PHP 8.1 o superior con la extensión `pdo_mysql`
 - MySQL 5.7+ / MariaDB
 - Apache (Laragon o XAMPP)
-- Composer (opcional: solo hace falta para el envío real de email, ver más abajo)
+- Composer (hace falta para descargar el informe de más vendidos en PDF, HU-14, y para el
+  envío real de email; ver más abajo)
 
 ## Puesta en marcha
 
@@ -114,6 +115,11 @@ Instalá las dependencias con Composer:
 ```bash
 composer install
 ```
+
+Este mismo comando instala Dompdf, que hace falta para descargar el informe de productos
+más vendidos en PDF (HU-14). Sin `vendor/` el informe se ve igual en pantalla, pero el
+botón "Descargar PDF" responde con un aviso: conviene correr `composer install` aunque no
+se configure el email.
 
 Copiá `.env.example` a `.env` y completá tus credenciales SMTP:
 

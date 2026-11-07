@@ -264,6 +264,21 @@ function requireRole(string $modulo): void
 }
 
 /**
+ * Cantidad con su unidad, para mostrar: sin ceros de más y con coma decimal.
+ * "38.50" + "kg" -> "38,5 kg"; "24.00" + "unidad" -> "24 uds.". Es el mismo
+ * formato del resumen de productos de las próximas entregas (HU-13); lo usan
+ * el informe de más vendidos (HU-14), su PDF y el Inicio.
+ *
+ * @param string $unidad "kg" o "unidad" (producto.unidad_medida).
+ */
+function formatear_cantidad(float|string $cantidad, string $unidad): string
+{
+    $numero = rtrim(rtrim(number_format((float) $cantidad, 2, ',', ''), '0'), ',');
+
+    return $numero . ' ' . ($unidad === 'kg' ? 'kg' : 'uds.');
+}
+
+/**
  * Iniciales para el avatar: "Ana Lopez" -> "AL", "Ana" -> "AN".
  */
 function iniciales(string $nombre): string

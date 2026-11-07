@@ -163,6 +163,19 @@ final class Producto
         return (int) $stmt->fetchColumn();
     }
 
+    /**
+     * Cuántos productos activos hay, en total o de una categoría. Lo usa el
+     * indicador "de N productos activos" del informe de más vendidos (HU-14).
+     */
+    public static function contarActivos(?int $idTipoProducto = null): int
+    {
+        if ($idTipoProducto !== null) {
+            return self::contarActivosPorTipo($idTipoProducto);
+        }
+
+        return (int) Database::getConnection()->query('SELECT COUNT(*) FROM producto WHERE activo = 1')->fetchColumn();
+    }
+
     public static function existeCodigo(string $codigo, ?int $excepto = null): bool
     {
         return self::existeCampo('codigo', $codigo, $excepto);

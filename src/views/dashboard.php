@@ -5,13 +5,16 @@ declare(strict_types=1);
 /**
  * BakerSoft - Dashboard (HU-00). Slot del app-layout.
  *
- * Las próximas entregas son datos reales (HU-13): vienen de
- * Pedido::listarProximasEntregas(), la misma consulta del listado de entregas.
- * Ventas, más vendidos y stock siguen siendo mock, armados desde
- * DashboardController: los reales son de sprints posteriores.
+ * Dos bloques son datos reales: las próximas entregas (HU-13), de
+ * Pedido::listarProximasEntregas(), y los más vendidos (HU-14), de
+ * Pedido::rankingMasVendidos() con "Últimos 7 días". El de más vendidos solo se
+ * dibuja para los roles con permiso sobre el informe: para cajero y repartidor
+ * $masVendidos es null y el bloque no existe. Ventas y stock siguen siendo
+ * mock, armados desde DashboardController: los reales son de sprints
+ * posteriores.
  *
  * @var array{etiquetas: string[], valores: int[]}       $ventas
- * @var array<int, array{nombre: string, cantidad: string}> $masVendidos
+ * @var array<int, array{nombre: string, cantidad: string}>|null $masVendidos
  * @var array{alerta: string, bajo_stock: int, categorias: int, pedidos_pendientes: int} $stock
  * @var array<int, array<string, mixed>>                 $proximasEntregas
  */
@@ -40,24 +43,35 @@ declare(strict_types=1);
         </div>
     </section>
 
-    <!-- 2. Más vendidos -->
-    <section class="dash-bloque">
-        <div class="dash-bloque-cab">
-            <div>
-                <h2 class="dash-bloque-titulo">Más vendidos...</h2>
-                <p class="dash-bloque-sub">Últimos 7 días</p>
+    <!-- 2. Más vendidos (solo roles con permiso sobre el informe, HU-14) -->
+    <?php if ($masVendidos !== null): ?>
+        <section class="dash-bloque">
+            <div class="dash-bloque-cab">
+                <div>
+                    <h2 class="dash-bloque-titulo">Más vendidos...</h2>
+                    <p class="dash-bloque-sub">Últimos 7 días</p>
+                </div>
+                <a class="dash-bloque-link" href="<?= e(base_url('informes/mas-vendidos?periodo=ultimos-7')) ?>">Ver más...</a>
             </div>
-        </div>
 
-        <ul class="dash-lista">
-            <?php foreach ($masVendidos as $producto): ?>
-                <li>
-                    <span>&ndash; <?= e($producto['nombre']) ?></span>
-                    <span class="dash-lista-cantidad"><?= e($producto['cantidad']) ?></span>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    </section>
+            <?php if ($masVendidos === []): ?>
+
+                <p class="abm-vacio">No hay pedidos entregados en los últimos 7 días.</p>
+
+            <?php else: ?>
+
+                <ul class="dash-lista">
+                    <?php foreach ($masVendidos as $producto): ?>
+                        <li>
+                            <span>&ndash; <?= e($producto['nombre']) ?></span>
+                            <span class="dash-lista-cantidad"><?= e($producto['cantidad']) ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
 
     <!-- 3. Stock -->
     <section class="dash-bloque">

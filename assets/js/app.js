@@ -426,3 +426,56 @@ document.addEventListener('DOMContentLoaded', function () {
         errorFiltros.hidden = true;
     });
 });
+
+/* -----------------------------------------------------------------------
+   HU-14: panel de parámetros del informe de más vendidos. Es un GET normal
+   con recarga completa (no usa fetch). Este bloque solo habilita las fechas
+   con "Rango personalizado" (con otro período quedan deshabilitadas y no
+   viajan en la query string: las fechas efectivas las calcula el servidor) y
+   avisa, antes de enviar, si faltan o están al revés. El servidor valida lo
+   mismo igual (400), así que esto no lo reemplaza.
+   ----------------------------------------------------------------------- */
+
+document.addEventListener('DOMContentLoaded', function () {
+    var formInforme = document.getElementById('form-informe-mas-vendidos');
+
+    if (!formInforme) {
+        return;
+    }
+
+    var selectPeriodo = formInforme.elements['periodo'];
+    var campoDesde = formInforme.elements['fecha_desde'];
+    var campoHasta = formInforme.elements['fecha_hasta'];
+    var errorInforme = document.getElementById('error-informe-mas-vendidos');
+
+    function habilitarFechas() {
+        var personalizado = selectPeriodo.value === 'personalizado';
+
+        campoDesde.disabled = !personalizado;
+        campoHasta.disabled = !personalizado;
+    }
+
+    selectPeriodo.addEventListener('change', habilitarFechas);
+    habilitarFechas();
+
+    formInforme.addEventListener('submit', function (evento) {
+        var mensaje = '';
+
+        if (selectPeriodo.value === 'personalizado') {
+            if (campoDesde.value === '' || campoHasta.value === '') {
+                mensaje = 'La fecha ingresada no es válida';
+            } else if (campoDesde.value > campoHasta.value) {
+                mensaje = 'La fecha desde no puede ser posterior a la fecha hasta';
+            }
+        }
+
+        if (mensaje !== '') {
+            evento.preventDefault();
+            errorInforme.textContent = mensaje;
+            errorInforme.hidden = false;
+            return;
+        }
+
+        errorInforme.hidden = true;
+    });
+});
