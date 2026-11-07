@@ -279,6 +279,24 @@ function formatear_cantidad(float|string $cantidad, string $unidad): string
 }
 
 /**
+ * Clase CSS del badge de un estado de pedido (assets/css/app.css): el mismo
+ * mapeo y los mismos colores que el listado de Pedidos (pedido/_tabla.php).
+ * Un estado que no figure queda con el badge verde genérico.
+ */
+function clase_badge_estado(string $estado): string
+{
+    return match ($estado) {
+        'Nuevo'          => 'abm-badge-nuevo',
+        'Confirmado'     => 'abm-badge-confirmado',
+        'En preparación' => 'abm-badge-preparacion',
+        'Listo'          => 'abm-badge-listo',
+        'Entregado'      => 'abm-badge-entregado',
+        'Cancelado'      => 'abm-badge-cancelado',
+        default          => 'abm-badge-activo',
+    };
+}
+
+/**
  * Iniciales para el avatar: "Ana Lopez" -> "AL", "Ana" -> "AN".
  */
 function iniciales(string $nombre): string

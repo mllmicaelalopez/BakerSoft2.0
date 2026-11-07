@@ -479,3 +479,42 @@ document.addEventListener('DOMContentLoaded', function () {
         errorInforme.hidden = true;
     });
 });
+
+/* -----------------------------------------------------------------------
+   Avance de estado del pedido (Sprint 5, Figura 1): mismo criterio que la
+   cancelación (HU-12), un bloque inline oculto por defecto, sin modal. Sin JS
+   el botón principal es un submit y avanza directo; con JS se convierte en un
+   botón común que despliega la confirmación ("Confirmar" envía el form,
+   "Volver" la oculta). El servidor valida todo igual (estado actual y permiso
+   de cada paso), así que esto no lo reemplaza.
+   ----------------------------------------------------------------------- */
+
+document.addEventListener('DOMContentLoaded', function () {
+    var formAvanzar = document.getElementById('form-avanzar-estado');
+
+    if (!formAvanzar) {
+        return;
+    }
+
+    var btnAvanzar = document.getElementById('btn-avanzar-estado');
+    var bloqueAvance = document.getElementById('confirmar-avance');
+    var btnVolverAvance = document.getElementById('btn-volver-avance');
+
+    if (!btnAvanzar || !bloqueAvance) {
+        return;
+    }
+
+    btnAvanzar.type = 'button';
+
+    btnAvanzar.addEventListener('click', function () {
+        btnAvanzar.hidden = true;
+        bloqueAvance.hidden = false;
+    });
+
+    if (btnVolverAvance) {
+        btnVolverAvance.addEventListener('click', function () {
+            bloqueAvance.hidden = true;
+            btnAvanzar.hidden = false;
+        });
+    }
+});

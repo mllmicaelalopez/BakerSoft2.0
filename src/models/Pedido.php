@@ -456,4 +456,30 @@ final class Pedido
 
         return [$where, $params];
     }
+
+    /**
+     * Avanza el pedido un paso en el diagrama de estados (Figura 1 del Sprint
+     * 4): de $estadoActual a $estadoNuevo. Devuelve true si se actualizó
+     * exactamente una fila.
+     *
+     * La condición sobre el estado actual en el WHERE evita que dos usuarios
+     * avancen el mismo pedido a la vez, o que un doble clic lo avance dos
+     * pasos: el segundo UPDATE ya no encuentra el pedido en $estadoActual y
+     * devuelve false. Qué transiciones existen y quién las puede hacer lo
+     * decide PedidoController; acá solo se aplica el cambio.
+     *
+     * No toca fecha_ultima_modificacion ni usuario_ultima_modificacion: esos
+     * campos son la trazabilidad de la edición de productos y fecha (HU-10).
+     * El cambio de estado queda registrado en el log.
+     */
+    public static function avanzarEstado(int $id, string $estadoActual, string $estadoNuevo): bool
+    {
+        $stmt = Database::getConnection()->prepare(
+            'UPDATE pedido SET estado = :nuevo WHERE id_pedido = :id AND estado = :actual'
+        );
+
+        $stmt->execute(['nuevo' => $estadoNuevo, 'id' => $id, 'actual' => $estadoActual]);
+
+        return $stmt->rowCount() === 1;
+    }
 }

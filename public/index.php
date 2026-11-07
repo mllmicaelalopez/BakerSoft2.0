@@ -157,6 +157,7 @@ switch ($route) {
  *   {prefijo}/{id}/editar      POST  -> update($id)
  *   {prefijo}/{id}/estado      POST  -> toggleEstado($id)
  *   {prefijo}/{id}/ver         GET   -> show($id)  (solo si el controlador lo implementa)
+ *   {prefijo}/{id}/avanzar     POST  -> avanzarEstado($id)  (solo si el controlador lo implementa)
  *
  * Cualquier otra combinación cae en 404.
  */
@@ -174,6 +175,8 @@ function despachar_abm(string $prefijo, object $controlador, string $route, stri
         $controlador->toggleEstado((int) $m[1]);
     } elseif (preg_match('#^' . $escapado . '/(\d+)/ver$#', $route, $m) && $metodo === 'GET' && method_exists($controlador, 'show')) {
         $controlador->show((int) $m[1]);
+    } elseif (preg_match('#^' . $escapado . '/(\d+)/avanzar$#', $route, $m) && $metodo === 'POST' && method_exists($controlador, 'avanzarEstado')) {
+        $controlador->avanzarEstado((int) $m[1]);
     } else {
         http_response_code(404);
         view('errors/404', ['route' => $route]);

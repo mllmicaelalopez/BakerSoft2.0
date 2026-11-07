@@ -14,6 +14,10 @@
 
 * { box-sizing: border-box; }
 
+/* Un elemento con el atributo hidden no se muestra aunque su clase defina
+   display (por ejemplo .abm-btn o .abm-btn-secundario). */
+[hidden] { display: none !important; }
+
 body {
     margin: 0;
     font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -1343,4 +1347,31 @@ pre.error {
 
     .dash-etiquetas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* --------------------------------------------------------------------------
+   Avance de estado del pedido (Sprint 5, Figura 1)
+   -------------------------------------------------------------------------- */
+
+/* Línea "Estado: <badge>" arriba del detalle del pedido */
+.abm-estado-linea {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1.1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--app-marron-oscuro);
+}
+
+/* Alerta informativa: la confirmación de un cambio de estado no es un error */
+.abm-alerta-info { background: var(--app-durazno-claro); border-color: var(--app-borde); color: var(--app-marron-oscuro); }
+
+.abm-alerta-info p { margin: 0; }
+
+/* Separación del botón de avance respecto del formulario de arriba */
+.abm-avance { margin-top: 1.1rem; }
+
+/* .abm-btn define display: inline-block y le gana al atributo hidden: sin esto
+   el botón "Iniciar preparación" quedaría visible junto con la confirmación. */
+.abm-avance [hidden] { display: none; }
  

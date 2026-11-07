@@ -23,6 +23,14 @@ declare(strict_types=1);
  * pedido/{id}/ver): $soloLectura en true con $motivoSoloLectura vacío es la
  * vista de consulta, sin advertencia, sin "Guardar" y sin "Cancelar pedido".
  *
+ * El avance de estado (Figura 1 del Sprint 4: Nuevo -> Confirmado -> En
+ * preparación -> Listo -> Entregado) es otra capacidad independiente de la
+ * edición, con su propio <form> (action .../avanzar; un <form> no puede ir
+ * adentro de otro) y su bloque de confirmación inline, igual que la
+ * cancelación. Se muestra, también en el detalle de solo lectura, solo si
+ * $transicion no es null (el rol tiene el permiso de ese paso). Sin JS, el
+ * botón principal envía directo (mejora progresiva).
+ *
  * @var string $modo                    "crear" o "editar"
  * @var array<string, mixed>|null $pedido  Solo en modo "editar".
  * @var array<int, array<string, mixed>> $tiposPedido
@@ -42,7 +50,10 @@ declare(strict_types=1);
  * @var string $motivoSoloLectura
  * @var bool $advertenciaEnPreparacion  Solo aplica en modo "editar".
  * @var bool $puedeCancelar             Solo aplica en modo "editar".
- * @var bool $mostrarCancelacion        Arranca abierto el bloque de motivo (redisplay tras error).
+ * @var array{siguiente: string, accion: string, capacidad: string}|null $transicion
+ *                                      Solo en modo "editar": el paso de estado que este rol puede
+ *                                      hacer sobre este pedido, o null si no hay botón.
+ * @var bool $mostrarCancelacion       Arranca abierto el bloque de motivo (redisplay tras error).
  * @var array<int, string> $motivosCancelacion
  * @var string $motivoCancelacion
  * @var string $motivoAclaracion
@@ -52,6 +63,10 @@ declare(strict_types=1);
 
 $esEdicion    = $modo === 'editar';
 $deshabilitar = $esEdicion && $soloLectura;
+
+// Mensaje de un POST exitoso que redirige acá (por ejemplo, el avance de
+// estado vuelve al detalle del pedido).
+$flash = $esEdicion ? flash_get() : null;
 
 $accion = $esEdicion
     ? base_url('pedido/' . $pedido['id_pedido'] . '/editar')
@@ -82,6 +97,17 @@ $opcionesProducto = static function (string $seleccionado) use ($productosDispon
 ?>
 
 <div class="abm-form-caja abm-form-ancho">
+
+    <?php if ($flash !== null): ?>
+        <p class="abm-alerta abm-alerta-<?= e($flash['tipo']) ?>" role="status"><?= e($flash['mensaje']) ?></p>
+    <?php endif; ?>
+
+    <?php if ($esEdicion): ?>
+        <p class="abm-estado-linea">
+            Estado:
+            <span class="abm-badge <?= e(clase_badge_estado((string) $pedido['estado'])) ?>"><?= e($pedido['estado']) ?></span>
+        </p>
+    <?php endif; ?>
 
     <?php if ($esEdicion && $soloLectura && $motivoSoloLectura !== ''): ?>
         <p class="abm-alerta abm-alerta-error" role="alert"><?= e($motivoSoloLectura) ?></p>
@@ -311,6 +337,37 @@ $opcionesProducto = static function (string $seleccionado) use ($productosDispon
         </div>
 
     </form>
+
+    <?php if ($esEdicion && $transicion !== null): ?>
+        <!--
+            Form aparte (action .../avanzar): un <form> no puede ir adentro de
+            otro. Sin JS el botón principal es un submit y avanza directo; con
+            JS (assets/js/app.js) pide confirmación antes. estado_actual viaja
+            oculto: el servidor lo compara con la base para no avanzar dos
+            pasos si la pantalla quedó vieja.
+        -->
+        <form method="post" action="<?= e(base_url('pedido/' . $pedido['id_pedido'] . '/avanzar')) ?>"
+              id="form-avanzar-estado" class="abm-avance" novalidate>
+
+            <input type="hidden" name="estado_actual" value="<?= e((string) $pedido['estado']) ?>">
+
+            <button type="submit" id="btn-avanzar-estado" class="abm-btn">
+                <?= e($transicion['accion']) ?>
+            </button>
+
+            <div id="confirmar-avance" class="abm-alerta abm-alerta-info" role="alert" hidden>
+                <p>
+                    ¿Confirmás pasar el pedido #<?= e((string) $pedido['id_pedido']) ?>
+                    de "<?= e((string) $pedido['estado']) ?>" a "<?= e($transicion['siguiente']) ?>"?
+                    Este cambio no se puede deshacer.
+                </p>
+                <div class="abm-form-pie">
+                    <button type="button" id="btn-volver-avance" class="abm-btn-secundario">Volver</button>
+                    <button class="abm-btn" type="submit">Confirmar</button>
+                </div>
+            </div>
+        </form>
+    <?php endif; ?>
 
     <?php if ($esEdicion && $puedeCancelar): ?>
         <!--

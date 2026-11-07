@@ -26,7 +26,10 @@ Funciona:
   excepción de administrador para modificar pedidos "En preparación"); consulta abierta
   a los 4 roles; cancelación (baja lógica, nunca se borra la fila) con motivo, con
   excepción para que el propio cajero cancele su pedido reciente aunque su rol no tenga
-  permiso general de cancelación.
+  permiso general de cancelación. Los pedidos avanzan de estado desde su detalle, un paso
+  a la vez (Nuevo → Confirmado → En preparación → Listo → Entregado): confirma el cajero,
+  inician y finalizan la preparación el maestro panadero, y entrega el repartidor (o el
+  cajero, si el cliente retira en el local); el administrador puede hacer todos los pasos.
 
 ## Requisitos
 

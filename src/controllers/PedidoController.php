@@ -23,6 +23,11 @@ declare(strict_types=1);
  * minutos de creados (puedeCancelar()); esa restricción más fina no la
  * resuelve requireRole() y se chequea a mano en toggleEstado(). Ver
  * src/config/permisos.php.
+ *
+ * El avance de estado (avanzarEstado(), Figura 1 del Sprint 4) también usa
+ * requireRole('pedido-consulta'): lo hacen roles que no pueden editar (el
+ * maestro panadero y el repartidor), así que el permiso se controla por
+ * transición (TRANSICIONES y transicionDisponible()).
  */
 final class PedidoController
 {
@@ -43,6 +48,24 @@ final class PedidoController
 
     /** Estados desde los que un pedido todavía se puede cancelar (HU-12). */
     private const ESTADOS_CANCELABLES = ['Nuevo', 'Confirmado', 'En preparación'];
+
+    /**
+     * Diagrama de estados del pedido (Figura 1 del Sprint 4), indexado por
+     * estado actual: el estado siguiente, el texto del botón y la capacidad de
+     * src/config/permisos.php que dice quién puede hacer ese paso. Las
+     * transiciones son solo hacia adelante y de a un paso. "Entregado" y
+     * "Cancelado" son estados finales: no figuran acá, no tienen transición.
+     */
+    private const TRANSICIONES = [
+        'Nuevo'          => ['siguiente' => 'Confirmado',     'accion' => 'Confirmar pedido',      'capacidad' => 'pedido-confirmar'],
+        'Confirmado'     => ['siguiente' => 'En preparación', 'accion' => 'Iniciar preparación',   'capacidad' => 'pedido-preparacion'],
+        'En preparación' => ['siguiente' => 'Listo',          'accion' => 'Finalizar preparación', 'capacidad' => 'pedido-preparacion'],
+        'Listo'          => ['siguiente' => 'Entregado',      'accion' => 'Marcar como entregado', 'capacidad' => 'pedido-entregar'],
+    ];
+
+    private const MOTIVO_SIN_TRANSICION = 'El pedido no puede avanzar de estado en su estado actual.';
+
+    private const MOTIVO_ESTADO_CAMBIO = 'El estado del pedido cambió mientras lo estabas viendo. Revisá su estado actual.';
 
     /** Minutos que tiene el cajero, desde que creó el pedido, para poder cancelarlo él mismo. */
     private const VENTANA_CANCELACION_CAJERO_MINUTOS = 30;
@@ -287,6 +310,10 @@ final class PedidoController
             // seguir siendo cancelable para ese mismo cajero (pedido propio,
             // dentro de los 30 minutos).
             'puedeCancelar'            => $this->esCancelable($pedido, $rol, $idUsuario),
+            // El avance de estado (Figura 1) también es independiente de la
+            // edición: lo ve quien tiene el permiso de esa transición, aunque
+            // el pedido esté en solo lectura para su rol.
+            'transicion'               => $this->transicionDisponible($pedido, $rol),
             'mostrarCancelacion'       => false,
             'motivosCancelacion'       => self::MOTIVOS_CANCELACION,
             'motivoCancelacion'        => '',
@@ -301,10 +328,13 @@ final class PedidoController
      *
      * Detalle de solo lectura (HU-10, HU-11): la misma pantalla que
      * showEditForm(), pero sin advertencias, sin "Guardar" y sin "Cancelar
-     * pedido", para quien solo quiere mirar el pedido. Los cuatro roles
-     * pueden consultar (requireRole('pedido-consulta'), lo hace showEditForm()
-     * al reusarlo, pero se pide acá también para que el permiso se lea de un
-     * vistazo).
+     * pedido", para quien solo quiere mirar el pedido. Sí muestra el botón de
+     * avance de estado si el rol tiene el permiso de esa transición (no se
+     * pisa 'transicion'): es la pantalla a la que llegan el maestro panadero
+     * y el repartidor, desde el listado de Pedidos y desde "Próximas
+     * entregas". Los cuatro roles pueden consultar
+     * (requireRole('pedido-consulta'), lo hace showEditForm() al reusarlo,
+     * pero se pide acá también para que el permiso se lea de un vistazo).
      */
     public function show(int $id): void
     {
@@ -508,6 +538,86 @@ final class PedidoController
 
         flash_set(sprintf('El pedido #%d se canceló.', $id), 'ok');
         redirect('pedido');
+    }
+
+    /**
+     * POST /pedido/{id}/avanzar
+     *
+     * Avanza el pedido un paso en el diagrama de estados (Figura 1 del Sprint
+     * 4): Nuevo -> Confirmado -> En preparación -> Listo -> Entregado. Solo
+     * hacia adelante y de a un paso; "Entregado" y "Cancelado" no tienen
+     * transición. Cada paso lo puede hacer el administrador y el rol que
+     * corresponde a ese trabajo (ver 'pedido-confirmar', 'pedido-preparacion'
+     * y 'pedido-entregar' en src/config/permisos.php).
+     *
+     * requireRole('pedido-consulta'): los cuatro roles pueden llegar (el
+     * maestro panadero y el repartidor entran por el detalle de solo
+     * lectura); el permiso fino se controla por transición, igual que la
+     * restricción del cajero en toggleEstado().
+     *
+     * Rechazos, con códigos distintos a propósito (mismo criterio que
+     * toggleEstado()):
+     *   - 404: el pedido no existe.
+     *   - 400: el estado actual no tiene transición, o el estado cambió desde
+     *     que el usuario abrió la pantalla (otro usuario ya lo avanzó, o la
+     *     pantalla quedó vieja). El formulario manda estado_actual y se lo
+     *     compara contra la base: así un doble clic o dos pestañas nunca
+     *     saltean un estado.
+     *   - 403: la transición existe, pero este rol no la puede hacer.
+     */
+    public function avanzarEstado(int $id): void
+    {
+        requireAuth();
+        requireRole('pedido-consulta');
+
+        $pedido = Pedido::buscarPorId($id);
+
+        if ($pedido === null) {
+            $this->noEncontrado();
+            return;
+        }
+
+        $estadoActual = (string) $pedido['estado'];
+        $transicion   = self::TRANSICIONES[$estadoActual] ?? null;
+
+        if ($transicion === null) {
+            http_response_code(400);
+            $this->showEditForm($id, ['error' => self::MOTIVO_SIN_TRANSICION]);
+            return;
+        }
+
+        if (trim((string) ($_POST['estado_actual'] ?? '')) !== $estadoActual) {
+            http_response_code(400);
+            $this->showEditForm($id, ['error' => self::MOTIVO_ESTADO_CAMBIO]);
+            return;
+        }
+
+        $rol = (string) (usuario_actual()['rol'] ?? '');
+
+        if ($this->transicionDisponible($pedido, $rol) === null) {
+            http_response_code(403);
+            view('errors/403', ['modulo' => 'pedido']);
+            return;
+        }
+
+        // Si dos usuarios avanzan el mismo pedido a la vez, el UPDATE (que
+        // exige el estado actual en el WHERE) solo le sirve al primero.
+        if (!Pedido::avanzarEstado($id, $estadoActual, $transicion['siguiente'])) {
+            http_response_code(400);
+            $this->showEditForm($id, ['error' => self::MOTIVO_ESTADO_CAMBIO]);
+            return;
+        }
+
+        app_log(sprintf(
+            'PEDIDO ESTADO id=%d de="%s" a="%s" email=%s',
+            $id,
+            $estadoActual,
+            $transicion['siguiente'],
+            $this->emailActual()
+        ));
+
+        flash_set(sprintf('El pedido #%d pasó a "%s".', $id, $transicion['siguiente']), 'ok');
+        redirect('pedido/' . $id . '/ver');
     }
 
     /* -----------------------------------------------------------------------
@@ -906,6 +1016,31 @@ final class PedidoController
     {
         return $this->esEstadoCancelable((string) $pedido['estado'])
             && $this->puedeCancelar($pedido, $rol, $idUsuarioActual);
+    }
+
+    /**
+     * La transición que este rol puede hacer sobre este pedido (Figura 1), o
+     * null si el estado no tiene transición (Entregado, Cancelado) o el rol no
+     * figura en la capacidad de ese paso. No corta la ejecución (a diferencia
+     * de requireRole()): la usan showEditForm(), para decidir si muestra el
+     * botón, y avanzarEstado(), para decidir si responde 403.
+     *
+     * @param array<string, mixed> $pedido
+     * @return array{siguiente: string, accion: string, capacidad: string}|null
+     */
+    private function transicionDisponible(array $pedido, string $rol): ?array
+    {
+        $transicion = self::TRANSICIONES[(string) $pedido['estado']] ?? null;
+
+        if ($transicion === null) {
+            return null;
+        }
+
+        if (!in_array($rol, CAPACIDADES[$transicion['capacidad']] ?? [], true)) {
+            return null;
+        }
+
+        return $transicion;
     }
 
     /**

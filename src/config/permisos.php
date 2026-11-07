@@ -29,6 +29,24 @@ const CAPACIDADES = [
     //   pedido puntual, y la resuelve PedidoController::puedeCancelar().
     'pedido'          => ['administrador', 'cajero'],
     'pedido-consulta' => ['administrador', 'cajero', 'repartidor', 'maestro_panadero'],
+    // Cambio de estado del pedido (Sprint 5, Figura 1 del Sprint 4). Las
+    // transiciones son solo hacia adelante y de a un paso: Nuevo -> Confirmado
+    // -> En preparación -> Listo -> Entregado. El administrador puede hacerlas
+    // todas; además, cada rol hace la que corresponde a su trabajo:
+    // - 'pedido-confirmar': Nuevo -> Confirmado (ConfirmarPedido). Lo hace
+    //   administración o caja, que es quien toma y confirma el pedido.
+    // - 'pedido-preparacion': Confirmado -> En preparación y En preparación ->
+    //   Listo (IniciarPreparacion y FinalizarPreparacion). Son las dos
+    //   transiciones de producción: administrador y maestro panadero.
+    // - 'pedido-entregar': Listo -> Entregado (EntregarPedido). Lo hace el
+    //   repartidor al entregar y el cajero cuando el cliente retira en el
+    //   local.
+    // El cajero no tiene 'pedido-preparacion' ni el maestro panadero
+    // 'pedido-confirmar': cada uno solo ve el botón de lo que le toca. El
+    // servidor controla el permiso por transición (PedidoController).
+    'pedido-confirmar'   => ['administrador', 'cajero'],
+    'pedido-preparacion' => ['administrador', 'maestro_panadero'],
+    'pedido-entregar'    => ['administrador', 'repartidor', 'cajero'],
     // Informes (Sprint 5): el de productos más vendidos (HU-14) es información
     // de gestión (qué producir y qué comprar), no de operación del día a día:
     // solo administrador y maestro panadero. Cajero y repartidor no ven la
