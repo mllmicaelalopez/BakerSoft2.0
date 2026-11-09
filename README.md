@@ -4,10 +4,11 @@ Sistema de gestión para panaderías. PHP puro (sin frameworks), MySQL y PDO.
 
 Estado actual: **autenticación completa, ABM de Producto y Tipo de Producto (con unidad
 de medida kg/unidad), Roles y Permisos, módulo de Pedidos completo (alta, modificación,
-consulta y cancelación), y envío real de email de recuperación**. El dashboard todavía
-usa datos mock (ventas, más vendidos, stock y próximas entregas): se reemplazan por
-consultas reales cuando el dashboard empiece a consultar los módulos ya existentes
-(Pedidos) y los que falten (Ventas, Stock).
+consulta, cancelación y avance de estado), listados e informes del Sprint 5 (próximas
+entregas y productos más vendidos), y envío real de email de recuperación**. En el
+Inicio, los bloques "Próximas entregas…" y "Más vendidos…" ya leen datos reales; solo
+Ventas y Stock siguen con datos mock, y se reemplazan por consultas reales cuando existan
+esos módulos.
 
 Funciona:
 
@@ -30,6 +31,16 @@ Funciona:
   a la vez (Nuevo → Confirmado → En preparación → Listo → Entregado): confirma el cajero,
   inician y finalizan la preparación el maestro panadero, y entrega el repartidor (o el
   cajero, si el cliente retira en el local); el administrador puede hacer todos los pasos.
+- **Listados e informes** (Sprint 5):
+  - **Próximas entregas** (`EntregaController`, HU-13): pedidos Confirmado, En preparación
+    y Listo de hoy a 7 días, más los atrasados; urgencia (Atrasado, Hoy, Próximos días);
+    filtros por fechas, estado, tipo y cliente; paginación de 25; exportación CSV. Lo ven
+    los cuatro roles.
+  - **Productos más vendidos** (`InformeController`, HU-14): ranking por cantidad de
+    pedidos Entregado en el período, con cantidad en su unidad, gráfico de los 10
+    primeros, comparativo con el período anterior y descarga en PDF (Dompdf). Solo
+    administrador y maestro panadero.
+  - Ambos alimentan los bloques correspondientes del Inicio con las mismas consultas.
 
 ## Requisitos
 
@@ -176,13 +187,15 @@ BakerSoft/
 │   │   ├── permisos.php    # CAPACIDADES: mapa de roles permitidos por módulo
 │   │   └── env.php         # Carga de .env (cargar_env(), env())
 │   ├── controllers/        # AuthController, DashboardController, ProductoController,
-│   │                       # TipoProductoController, UsuarioController, PedidoController
+│   │                       # TipoProductoController, UsuarioController, PedidoController,
+│   │                       # EntregaController, InformeController
 │   ├── models/              # Usuario, Rol, Producto, TipoProducto, TipoPedido, Cliente,
 │   │                       # Pedido, DetallePedido
 │   ├── views/               # Plantillas PHP
 │   │   ├── layouts/         # app-layout (pantallas internas) / auth-layout / header / footer
 │   │   ├── auth/            # login, registro, recuperación de contraseña
 │   │   ├── producto/, tipo-producto/, usuario/, pedido/  # ABMs (index + form)
+│   │   ├── entrega/, informe/  # Próximas entregas (HU-13) y más vendidos (HU-14, con su PDF)
 │   │   ├── errors/          # 404, 403
 │   │   └── home.php         # Página de prueba de conexión
 │   └── helpers/
